@@ -13,10 +13,10 @@ this.$LENGTH.setValue(this.$CHUNK.sendMessage("|.|", []));
 return def; })();
 var password_input = (function() {
 var def = function({  }) { this.printer = new Print();
-  this.$CLICK_PROGRAM = Calang['ProgramValue'].newInstance();
   this.$MODAL_RESULT = Calang['BooleanValue'].newInstance();
   this.$MODAL_ELEMENT = Calang['ModalElementValue'].newInstance();
   this.$TEXT_RECORD = Calang['BytesValue'].newInstance();
+  this.$CLICK_PROGRAM = Calang['ProgramValue'].newInstance();
 };
 def.prototype = {
   __MODAL_CLOSE: async function() {
@@ -73,11 +73,11 @@ await new tower({ $HEIGHT:this.$LENGTH }).run()
 return def; })();
 var tower = (function() {
 var def = function({ $HEIGHT }) { this.printer = new Print();
+  this.$LOCAL_HEIGHT = Calang['IntegerValue'].newInstance();
+  this.$CURSOR = Calang['IntegerValue'].newInstance();
+  this.$FLAG = Calang['BooleanValue'].newInstance();
   this.$HEIGHT = Calang['IntegerValue'].newInstance();
     this.$HEIGHT.setValue($HEIGHT);
-  this.$CURSOR = Calang['IntegerValue'].newInstance();
-  this.$LOCAL_HEIGHT = Calang['IntegerValue'].newInstance();
-  this.$FLAG = Calang['BooleanValue'].newInstance();
 };
 def.prototype = {
   __MAIN: async function() {

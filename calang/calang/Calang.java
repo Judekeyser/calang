@@ -1,32 +1,36 @@
 package calang;
 
 import calang.instructions.*;
-import calang.scopes.Scope;
-import calang.scopes.operator.WritableOperatorMap;
-import calang.scopes.Operator;
+import calang.model.*;
+import calang.model.algebra.WithScopeAndOperators;
+import calang.model.operator.OperatorMap;
+import calang.model.operator.WritableOperatorMap;
+import calang.model.types.WritableTypeMap;
 import calang.types.*;
+import calang.types.dummy.Dummy;
 
 import java.util.*;
 import java.util.stream.*;
 
+import static calang.model.operator.WritableOperatorMap.newWritableOperatorMap;
+import static calang.model.types.WritableTypeMap.newWritableTypeMap;
 import static calang.rejections.Rejections.*;
 import static java.util.Collections.*;
-import static java.util.Collections.unmodifiableList;
-import static java.util.List.copyOf;
 import static java.util.function.Predicate.not;
 
 public class Calang {
-    final Map<String, Class<? extends TypedValue<?>>> TOKENS;
+    final WritableTypeMap typesMap;
     final WritableOperatorMap operatorsMap;
 
     protected Calang() {
-        TOKENS = new HashMap<>(Map.of(
-                "INTEGER", IntegerValue.class,
-                "BYTES", BytesValue.class,
-                "BOOLEAN", BooleanValue.class,
-                "PROGRAM", ProgramValue.class
-        ));
-        operatorsMap = WritableOperatorMap.ofMap();
+        typesMap = newWritableTypeMap();
+        operatorsMap = newWritableOperatorMap();
+        {
+            addType("INTEGER", IntegerValue.class);
+            addType("BYTES", BytesValue.class);
+            addType("BOOLEAN", BooleanValue.class);
+            addType("PROGRAM", ProgramValue.class);
+        }
         {
             addOperator(IntegerValue.class, "NEQ", BooleanValue.class, singletonList(IntegerValue.class));
             addOperator(IntegerValue.class, "PREC", IntegerValue.class, emptyList());
@@ -45,18 +49,18 @@ public class Calang {
         }
     }
 
-    public final <T extends TypedValue<T>> void addType(String typeIdentifier, Class<T> typeFactory) {
-        TOKENS.put(typeIdentifier, typeFactory);
+    public final <T extends TypedValue<T>> void addType(String typeIdentifier, Class<T> type) {
+        typesMap.registerType(typeIdentifier, type);
     }
 
     public final <T extends TypedValue<T>, R extends TypedValue<R>> void addOperator(Class<T> clz, String operatorName,
                                                                Class<R> returnType,
                                                                List<Class<? extends TypedValue<?>>> typeChecker) {
-        operatorsMap.addOperator(clz, operatorName, returnType, typeChecker);
+        operatorsMap.registerOperator(clz, operatorName, returnType, typeChecker);
     }
     public final <T extends TypedValue<T>, R extends TypedValue<R>> void addOperator(Class<T> clz, String operatorName,
                                                                Class<R> returnType, Class<? extends TypedValue<?>> typeChecker) {
-        operatorsMap.addOperator(clz, operatorName, returnType, typeChecker);
+        operatorsMap.registerOperator(clz, operatorName, returnType, typeChecker);
     }
 
     /******************************************************************** */
@@ -71,53 +75,41 @@ public class Calang {
         }
         Scope scope;
         {
-            HashMap<String, Class<? extends TypedValue<?>>> variables;
-            ArrayList<String> inputs;
-            ArrayList<String> outputs;
+            HashSet<Scope.Declaration<?>> variables;
+            HashSet<Scope.Declaration<?>> inputs;
+            HashSet<Scope.Declaration<?>> outputs;
             {
-                variables = new HashMap<>();
-                inputs = new ArrayList<>();
-                outputs = new ArrayList<>();
+                variables = new HashSet<>();
+                inputs = new HashSet<>();
+                outputs = new HashSet<>();
                 lines.stream().takeWhile(l -> l.startsWith("DECLARE")).forEach(line -> {
                     var tokens = line.trim().split("\s+");
                     assert tokens[0].equals("DECLARE");
-                    var varName = tokens[tokens.length - 2];
-                    var varType = tokens[tokens.length - 1];
-                    var variable = Objects.requireNonNull(TOKENS.get(varType), "Unable to resolve type %s".formatted(varType));
-                    variables.put(varName, variable);
+                    var declaration = new Scope.Declaration<Dummy>(
+                            tokens[tokens.length - 2],
+                            typesMap.typeForSymbol(tokens[tokens.length - 1])
+                    );
+                    variables.add(declaration);
                     if (tokens.length == 4) {
-                        if ("INPUT".equals(tokens[1])) inputs.add(varName);
-                        else if ("OUTPUT".equals(tokens[1])) outputs.add(varName);
+                        if ("INPUT".equals(tokens[1])) inputs.add(declaration);
+                        else if ("OUTPUT".equals(tokens[1])) outputs.add(declaration);
                     }
                 });
             }
             scope = new Scope() {
                 @Override
-                @SuppressWarnings("unchecked")
-                public <T extends TypedValue<T>> Class<T> typeOf(String token) {
-                    var type = variables.get(token);
-                    if (type == null) throw UNKNOWN_VARIABLE.error(token);
-                    return (Class<T>) type;
+                public Set<Scope.Declaration<?>> declarations() {
+                    return unmodifiableSet(variables);
                 }
 
                 @Override
-                public List<String> symbolList() {
-                    return copyOf(variables.keySet());
+                public Set<Scope.Declaration<?>> inputDeclarations() {
+                    return unmodifiableSet(inputs);
                 }
 
                 @Override
-                public List<String> inputsList() {
-                    return unmodifiableList(inputs);
-                }
-
-                @Override
-                public List<String> outputsList() {
-                    return unmodifiableList(outputs);
-                }
-
-                @Override
-                public <T extends TypedValue<T>> Operator<T> maybeOperator(Class<T> typedValue, String operatorName) {
-                    return operatorsMap.maybeOperator(typedValue, operatorName);
+                public Set<Scope.Declaration<?>> outputDeclarations() {
+                    return unmodifiableSet(outputs);
                 }
             };
         }
@@ -146,10 +138,20 @@ public class Calang {
                     var mk = uncheckedPreInstruction(tokens);
                     if (mk instanceof ComptInstructionMk<PreInstruction> comptMk) {
                         // Going to recreate a custom ComptInstructionMk that auto-validates itself
-                        class Impl implements ComptInstructionMk<Void> {
+                        class Impl implements ComptInstructionMk<Void>, WithScopeAndOperators {
+                            @Override
+                            public Scope scope() {
+                                return scope;
+                            }
+
+                            @Override
+                            public OperatorMap operators() {
+                                return operatorsMap;
+                            }
+
                             @Override
                             public Void computeInstruction(String targetSymbol, String baseSymbol, String operator, List<String> parameterSymbols) {
-                                scope.assertOperatorUsageValid(baseSymbol, targetSymbol, operator, parameterSymbols);
+                                assertOperatorUsageValid(baseSymbol, targetSymbol, operator, parameterSymbols);
                                 return null;
                             }
                         } new Impl().makeInstruction(tokens);

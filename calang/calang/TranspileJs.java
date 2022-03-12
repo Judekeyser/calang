@@ -1,7 +1,8 @@
 package calang;
 
-import calang.scopes.Scope;
-import calang.types.TypedValue;
+import calang.model.Program;
+import calang.model.Scope;
+import calang.model.TypedValue;
 
 import java.util.*;
 import java.util.stream.*;
@@ -33,13 +34,13 @@ public class TranspileJs extends Calang {
     @Override
     protected List<String> transpile(String programName, Program<PreInstruction> program) {
         var scope = program.scope();
-        var inputs = new HashSet<>(program.getDeclaredInputs());
+        var inputs = new HashSet<>(program.scope().inputSymbols());
 
         var linesToWrite = new ArrayList<String>();
         linesToWrite.add("var %s = (function() {%nvar def = function({ %s }) { this.printer = new Print();".formatted(programName, String.join(", ", inputs)));
-        for (var s : scope.symbolList()) {
-            linesToWrite.add("  %s = %s.newInstance();".formatted(fVar(s), transpileType(scope.typeOf(s))));
-            if (inputs.contains(s)) linesToWrite.add("    %s.setValue(%s);".formatted(fVar(s), s));
+        for (var s : scope.declarations()) {
+            linesToWrite.add("  %s = %s.newInstance();".formatted(fVar(s.identifier()), transpileType(s.type())));
+            if (inputs.contains(s.identifier())) linesToWrite.add("    %s.setValue(%s);".formatted(fVar(s.identifier()), s.identifier()));
         }
         linesToWrite.add("};%sdef.prototype = {".formatted(System.lineSeparator()));
         for (var name : program.paragraphNames()) {
@@ -51,7 +52,7 @@ public class TranspileJs extends Calang {
             linesToWrite.add("  },");
         }
         {
-            linesToWrite.add("  run: async function() { await %s(); this.printer.flush(); return { %s }; }\n};".formatted(fVar(fPar(program.headParagraphName())), program.getDeclaredOutputs().stream().map(t -> "%s:%s".formatted(t, fVar(t))).collect(Collectors.joining(", "))));
+            linesToWrite.add("  run: async function() { await %s(); this.printer.flush(); return { %s }; }\n};".formatted(fVar(fPar(program.headParagraphName())), program.scope().outputSymbols().stream().map(t -> "%s:%s".formatted(t, fVar(t))).collect(Collectors.joining(", "))));
         }
         linesToWrite.add("return def; })();");
         return linesToWrite;

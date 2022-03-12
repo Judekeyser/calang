@@ -1,6 +1,6 @@
 package calang;
 
-import calang.types.TypedValue;
+import calang.model.TypedValue;
 import calang.types.BooleanValue;
 import calang.types.BytesValue;
 import calang.types.IntegerValue;
@@ -19,7 +19,7 @@ public class CalangTest {
         var calang = new Calang();
 
         for (String s : new String[]{"INTEGER", "PROGRAM", "BYTES", "BOOLEAN"})
-            assertTrue("Basic Calang should support %s type".formatted(s), calang.TOKENS.containsKey(s));
+            assertNotNull("Basic Calang should support %s type".formatted(s), calang.typesMap.typeForSymbol(s));
     }
 
     @Test
@@ -28,15 +28,15 @@ public class CalangTest {
 
         for (String s : new String[]{"NEQ", "PREC", "SUCC"})
             assertNotNull("Basic Calang should support %s operator on INTEGER".formatted(s),
-                    calang.operatorsMap.maybeOperator(IntegerValue.class, s));
+                    calang.operatorsMap.operatorForName(IntegerValue.class, s));
 
         for (String s : new String[]{"NEGATE", "AND", "OR", "XAND", "XOR", "IMPLIES"})
             assertNotNull("Basic Calang should support %s operator on BOOLEAN".formatted(s),
-                    calang.operatorsMap.maybeOperator(BooleanValue.class, s));
+                    calang.operatorsMap.operatorForName(BooleanValue.class, s));
 
         for (String s : new String[]{"|.|"})
             assertNotNull("Basic Calang should support %s operator on BYTES".formatted(s),
-                    calang.operatorsMap.maybeOperator(BytesValue.class, s));
+                    calang.operatorsMap.operatorForName(BytesValue.class, s));
     }
 
     @Test
@@ -44,14 +44,11 @@ public class CalangTest {
         var calang = new Calang();
         var magnet = "MY_TYPE";
 
-        assertFalse(calang.TOKENS.containsKey(magnet));
-
         class MyType implements TypedValue<MyType> {}
 
         calang.addType(magnet, MyType.class);
 
-        assertTrue(calang.TOKENS.containsKey(magnet));
-        assertSame(calang.TOKENS.get(magnet), MyType.class); // null yields false
+        assertSame(calang.typesMap.typeForSymbol(magnet), MyType.class); // null yields false
     }
 
     @Test
@@ -60,7 +57,7 @@ public class CalangTest {
 
         calang.addOperator(IntegerValue.class, "|.|", IntegerValue.class, emptyList());
 
-        assertNotNull(calang.operatorsMap.maybeOperator(IntegerValue.class, "|.|"));
+        assertNotNull(calang.operatorsMap.operatorForName(IntegerValue.class, "|.|"));
     }
 
 }

@@ -1,5 +1,7 @@
 package calang;
 
+import calang.model.Program;
+import calang.model.Scope;
 import calang.types.BooleanValue;
 import calang.types.BytesValue;
 import calang.types.IntegerValue;
@@ -27,8 +29,8 @@ public class CalangParseE2ETest {
                   CALL tower $LENGTH >> $HEIGHT
                 """);
 
-        assertTrue(program.getDeclaredInputs().isEmpty());
-        assertTrue(program.getDeclaredOutputs().isEmpty());
+        assertTrue(program.scope().outputDeclarations().isEmpty());
+        assertTrue(program.scope().inputDeclarations().isEmpty());
         assertEquals("BEGIN", program.headParagraphName());
 
         var scope = program.scope();
@@ -49,8 +51,8 @@ public class CalangParseE2ETest {
                   COMPT IN $LENGTH $CHUNK |.|
                 """);
 
-        assertTrue(program.getDeclaredInputs().contains("$CHUNK"));
-        assertTrue(program.getDeclaredOutputs().contains("$LENGTH"));
+        assertTrue(program.scope().inputDeclarations().contains(new Scope.Declaration<>("$CHUNK", BytesValue.class)));
+        assertTrue(program.scope().outputDeclarations().contains(new Scope.Declaration<>("$LENGTH", IntegerValue.class)));
         assertEquals("START", program.headParagraphName());
 
         var scope = program.scope();
@@ -109,8 +111,8 @@ public class CalangParseE2ETest {
                   COMPT IN $CURSOR $CURSOR SUCC
                 """);
 
-        assertTrue(program.getDeclaredInputs().contains("$HEIGHT"));
-        assertTrue(program.getDeclaredOutputs().isEmpty());
+        assertTrue(program.scope().inputDeclarations().contains(new Scope.Declaration<>("$HEIGHT", IntegerValue.class)));
+        assertTrue(program.scope().outputDeclarations().isEmpty());
         assertEquals("MAIN", program.headParagraphName());
         assertTrue(List.of("MAIN", "PRINT_LINE", "PRINT_COLUMN").containsAll(program.paragraphNames()));
 
@@ -124,7 +126,7 @@ public class CalangParseE2ETest {
         assertEquals(3, printColumn.instructions().size());
 
         var scope = program.scope();
-        assertTrue(List.of("$HEIGHT", "$LOCAL_HEIGHT", "$CURSOR", "$FLAG").containsAll(scope.symbolList()));
+        assertTrue(List.of("$HEIGHT", "$LOCAL_HEIGHT", "$CURSOR", "$FLAG").containsAll(scope.symbols()));
 
         assertSame(IntegerValue.class, scope.typeOf("$HEIGHT"));
         assertSame(IntegerValue.class, scope.typeOf("$LOCAL_HEIGHT"));

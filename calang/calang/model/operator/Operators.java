@@ -1,7 +1,7 @@
-package calang.scopes.operator;
+package calang.model.operator;
 
-import calang.types.TypedValue;
-import calang.scopes.Operator;
+import calang.model.TypedValue;
+import calang.model.Operator;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class Operators {
         }
     }
 
-    static <T extends TypedValue<T>, R extends TypedValue<R>> Operator<T> describes(
+    static <T extends TypedValue<T>, R extends TypedValue<R>> Operator<T> operatorOf(
             Class<T> baseType, Class<R> returnType,
             List<Class<? extends TypedValue<?>>> typeChecker
     ) {
@@ -37,7 +37,7 @@ public class Operators {
         } return new Impl();
     }
 
-    static <T extends TypedValue<T>, R extends TypedValue<R>> Operator<T> describes(
+    static <T extends TypedValue<T>, R extends TypedValue<R>> Operator<T> operatorOf(
             Class<T> baseType, Class<R> returnType, Class<? extends TypedValue<?>> typeChecker
     ) {
         class Impl extends WithReturnType<T> {

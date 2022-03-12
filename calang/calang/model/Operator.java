@@ -1,6 +1,4 @@
-package calang.scopes;
-
-import calang.types.TypedValue;
+package calang.model;
 
 import java.util.List;
 

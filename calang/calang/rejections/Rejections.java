@@ -5,6 +5,7 @@ public enum Rejections {
     UNDEFINED_PARAGRAPH("Unresolved paragrah named %s"),
     UNMAPPABLE_INPUT("Provided input field named %s cannot be mapped on program inputs"),
     UNMAPPED_INPUT("Unable to run the program as not all inputs are given; missing at least %s"),
+    UNSUPPORTED_TYPE("Unsupported type %s"),
     UNKNOWN_VARIABLE("The requested scope does not contain any reference to %s symbol"),
     UNSUPPORTED_OPERATOR("Unsupported operator %s on %s"),
     UNAPPLICABLE_OPERATOR("Operator %s on %s cannot be applied on types %s"),

@@ -1,7 +1,8 @@
-package calang.scopes.operator;
+package calang.model.operator;
 
-import calang.scopes.Operator;
-import calang.types.TypedValue;
+import calang.model.Operator;
+import calang.model.TypedValue;
+import calang.rejections.Rejections;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,28 +10,31 @@ import java.util.Map;
 public interface WritableOperatorMap extends OperatorMap, OperatorRegisterer {
 
     @Override
-    <T extends TypedValue<T>> Operator<T> maybeOperator(Class<T> typedValue, String operatorName);
+    <T extends TypedValue<T>> Operator<T> operatorForName(Class<T> typedValue, String operatorName);
 
     @Override
-    <T extends TypedValue<T>> void addOperator(Class<T> clz, String operatorName, Operator<T> operator);
+    <T extends TypedValue<T>> void registerOperator(Class<T> clz, String operatorName, Operator<T> operator);
 
-    static WritableOperatorMap ofMap() {
+    static WritableOperatorMap newWritableOperatorMap() {
         return new WritableOperatorMap() {
             private final Map<Class<? extends TypedValue<?>>, Map<String, ? extends Operator<?>>> map = new HashMap<>();
 
             @Override
-            public <T extends TypedValue<T>> Operator<T> maybeOperator(Class<T> typedValue, String operatorName) {
-                return get(safeGet(typedValue), operatorName);
+            public <T extends TypedValue<T>> Operator<T> operatorForName(Class<T> typedValue, String operatorName) {
+                Operator<T> op = get(safeGet(typedValue), operatorName);
+                if (op == null)
+                    throw Rejections.UNSUPPORTED_OPERATOR.error(operatorName, typedValue.getSimpleName());
+                return op;
             }
 
             @Override
-            public <T extends TypedValue<T>> void addOperator(Class<T> clz, String operatorName, Operator<T> operator) {
+            public <T extends TypedValue<T>> void registerOperator(Class<T> clz, String operatorName, Operator<T> operator) {
                 if (map.containsKey(clz)) {
                     assert safeGet(clz) != null;
                     safeGet(clz).put(operatorName, operator);
                 } else {
                     map.put(clz, new HashMap<>());
-                    addOperator(clz, operatorName, operator);
+                    registerOperator(clz, operatorName, operator);
                 }
             }
 

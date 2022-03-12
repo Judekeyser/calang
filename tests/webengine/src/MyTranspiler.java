@@ -2,7 +2,7 @@ package webengine.src;
 
 import calang.Tangle;
 import calang.TranspileJs;
-import calang.types.TypedValue;
+import calang.model.TypedValue;
 import calang.types.BytesValue;
 import calang.types.ProgramValue;
 

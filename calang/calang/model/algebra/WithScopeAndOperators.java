@@ -1,33 +1,31 @@
-package calang.scopes;
+package calang.model.algebra;
 
-import calang.scopes.operator.OperatorMap;
-import calang.types.TypedValue;
+import calang.model.Scope;
+import calang.model.operator.OperatorMap;
+import calang.types.dummy.Dummy;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static calang.rejections.Rejections.*;
+import static calang.rejections.Rejections.UNAPPLICABLE_OPERATOR;
+import static calang.rejections.Rejections.UNSTORABLE_OPERATOR_RESULT;
 
-public interface Scope extends OperatorMap {
+public interface WithScopeAndOperators {
 
-    List<String> symbolList();
+    Scope scope();
 
-    List<String> inputsList();
-
-    List<String> outputsList();
-
-    <T extends TypedValue<T>> Class<T> typeOf(String token);
+    OperatorMap operators();
 
     default void assertOperatorUsageValid(String baseSymbol, String targetSymbol, String operatorName, List<String> parameterSymbols) {
-        class AnonymousMagnet implements TypedValue<AnonymousMagnet> {
-            Class<AnonymousMagnet> hackSymbol(String token) {
-                return Scope.this.typeOf(token);
+        class Helper {
+            Class<Dummy> hackSymbol(String token) {
+                return scope().typeOf(token);
             }
-        } var helper = new AnonymousMagnet();
+        } var helper = new Helper();
         var base = helper.hackSymbol(baseSymbol);
         var target = helper.hackSymbol(targetSymbol);
         var parameters = parameterSymbols.stream().map(helper::hackSymbol).toList();
-        var operator = operatorOrDie(base, operatorName);
+        var operator = operators().operatorForName(base, operatorName);
 
         if (! operator.canBeStoredIn(target))
             throw UNSTORABLE_OPERATOR_RESULT.error(operatorName, base.getSimpleName(), target.getSimpleName());
@@ -35,7 +33,4 @@ public interface Scope extends OperatorMap {
             throw UNAPPLICABLE_OPERATOR.error(operator, base.getSimpleName(), Arrays.toString(parameters.stream().map(Class::getSimpleName).toArray()));
     }
 
-    default boolean isSymbolDeclared(String token) {
-        return symbolList().contains(token);
-    }
 }
