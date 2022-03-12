@@ -136,7 +136,7 @@ public class CalangParseE2ETest {
         return Arrays.asList(input.split("\n"));
     }
 
-    static Calang.Program program(String input) {
+    static Program<Calang.PreInstruction> program(String input) {
         return new Calang().parse(toLines(input));
     }
 

@@ -12,6 +12,10 @@ public interface Scope extends OperatorMap {
 
     List<String> symbolList();
 
+    List<String> inputsList();
+
+    List<String> outputsList();
+
     <T extends TypedValue<T>> Class<T> typeOf(String token);
 
     default void assertOperatorUsageValid(String baseSymbol, String targetSymbol, String operatorName, List<String> parameterSymbols) {

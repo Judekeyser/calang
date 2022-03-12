@@ -10,8 +10,9 @@ import java.util.*;
 import java.util.stream.*;
 
 import static calang.rejections.Rejections.*;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
+import static java.util.Collections.*;
+import static java.util.Collections.unmodifiableList;
+import static java.util.List.copyOf;
 import static java.util.function.Predicate.not;
 
 public class Calang {
@@ -64,71 +65,64 @@ public class Calang {
         List<String> transpile(Scope scope);
     }
 
-    public interface Program {
-        List<String> paragraphNames();
-
-        Paragraph paragraph(String name);
-
-        String headParagraphName();
-
-        Scope scope();
-
-        List<String> getDeclaredOutputs();
-
-        List<String> getDeclaredInputs();
-    }
-
-    @FunctionalInterface
-    public interface Paragraph {
-        List<PreInstruction> instructions();
-    }
-
-    protected Program parse(List<String> lines) {
+    protected Program<PreInstruction> parse(List<String> lines) {
         if (lines.stream().anyMatch(String::isBlank)) {
             return parse(lines.stream().filter(not(String::isBlank)).toList());
         }
-        HashMap<String, Class<? extends TypedValue<?>>> variables;
-        ArrayList<String> inputs;
-        ArrayList<String> outputs;
+        Scope scope;
         {
-            variables = new HashMap<>();
-            inputs = new ArrayList<>();
-            outputs = new ArrayList<>();
-            lines.stream().takeWhile(l -> l.startsWith("DECLARE")).forEach(line -> {
-                var tokens = line.trim().split("\s+");
-                assert tokens[0].equals("DECLARE");
-                var varName = tokens[tokens.length - 2];
-                var varType = tokens[tokens.length - 1];
-                var variable = Objects.requireNonNull(TOKENS.get(varType), "Unable to resolve type %s".formatted(varType));
-                variables.put(varName, variable);
-                if (tokens.length == 4) {
-                    if ("INPUT".equals(tokens[1])) inputs.add(varName);
-                    else if ("OUTPUT".equals(tokens[1])) outputs.add(varName);
+            HashMap<String, Class<? extends TypedValue<?>>> variables;
+            ArrayList<String> inputs;
+            ArrayList<String> outputs;
+            {
+                variables = new HashMap<>();
+                inputs = new ArrayList<>();
+                outputs = new ArrayList<>();
+                lines.stream().takeWhile(l -> l.startsWith("DECLARE")).forEach(line -> {
+                    var tokens = line.trim().split("\s+");
+                    assert tokens[0].equals("DECLARE");
+                    var varName = tokens[tokens.length - 2];
+                    var varType = tokens[tokens.length - 1];
+                    var variable = Objects.requireNonNull(TOKENS.get(varType), "Unable to resolve type %s".formatted(varType));
+                    variables.put(varName, variable);
+                    if (tokens.length == 4) {
+                        if ("INPUT".equals(tokens[1])) inputs.add(varName);
+                        else if ("OUTPUT".equals(tokens[1])) outputs.add(varName);
+                    }
+                });
+            }
+            scope = new Scope() {
+                @Override
+                @SuppressWarnings("unchecked")
+                public <T extends TypedValue<T>> Class<T> typeOf(String token) {
+                    var type = variables.get(token);
+                    if (type == null) throw UNKNOWN_VARIABLE.error(token);
+                    return (Class<T>) type;
                 }
-            });
+
+                @Override
+                public List<String> symbolList() {
+                    return copyOf(variables.keySet());
+                }
+
+                @Override
+                public List<String> inputsList() {
+                    return unmodifiableList(inputs);
+                }
+
+                @Override
+                public List<String> outputsList() {
+                    return unmodifiableList(outputs);
+                }
+
+                @Override
+                public <T extends TypedValue<T>> Operator<T> maybeOperator(Class<T> typedValue, String operatorName) {
+                    return operatorsMap.maybeOperator(typedValue, operatorName);
+                }
+            };
         }
-        Scope scope = new Scope() {
-            @Override
-            @SuppressWarnings("unchecked")
-            public <T extends TypedValue<T>> Class<T> typeOf(String token) {
-                var type = variables.get(token);
-                if(type == null)
-                    throw UNKNOWN_VARIABLE.error(token);
-                return (Class<T>) type;
-            }
 
-            @Override
-            public List<String> symbolList() {
-                return new ArrayList<>(variables.keySet());
-            }
-
-            @Override
-            public <T extends TypedValue<T>> Operator<T> maybeOperator(Class<T> typedValue, String operatorName) {
-                return operatorsMap.maybeOperator(typedValue, operatorName);
-            }
-        };
-
-        record Par(int lineIndex, String name, List<PreInstruction> instructions) implements Paragraph {}
+        record Par(int lineIndex, String name, List<PreInstruction> instructions) implements Paragraph<PreInstruction> {}
 
         List<Par> paragraphs;
         Par headParagraph;
@@ -171,14 +165,14 @@ public class Calang {
             headParagraph = paragraphs.stream().min(Comparator.comparingInt(Par::lineIndex)).orElseThrow(NO_PARAGRAPH_FOUND::error);
         }
 
-        return new Program() {
+        return new Program<>() {
             @Override
             public String headParagraphName() {
                 return headParagraph.name();
             }
 
             @Override
-            public Paragraph paragraph(String name) {
+            public Paragraph<PreInstruction> paragraph(String name) {
                 return paragraphs.stream().filter(__ -> __.name().equals(name)).findFirst().orElseThrow(() -> UNDEFINED_PARAGRAPH.error(name));
             }
 
@@ -191,22 +185,12 @@ public class Calang {
             public Scope scope() {
                 return scope;
             }
-
-            @Override
-            public List<String> getDeclaredOutputs() {
-                return outputs;
-            }
-
-            @Override
-            public List<String> getDeclaredInputs() {
-                return inputs;
-            }
         };
     }
 
     /******************************************************************** */
 
-    protected List<String> transpile(String programName, Program program) {
+    protected List<String> transpile(String programName, Program<PreInstruction> program) {
         throw NON_TRANSPILED_PROGRAM.error(programName);
     }
 

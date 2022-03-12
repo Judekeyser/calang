@@ -31,7 +31,7 @@ public class TranspileJs extends Calang {
     }
 
     @Override
-    protected List<String> transpile(String programName, Program program) {
+    protected List<String> transpile(String programName, Program<PreInstruction> program) {
         var scope = program.scope();
         var inputs = new HashSet<>(program.getDeclaredInputs());
 
