@@ -3,8 +3,8 @@ package webengine.src;
 import calang.Tangle;
 import calang.TranspileJs;
 import calang.types.TypedValue;
-import calang.types.builtin.BytesValue;
-import calang.types.builtin.ProgramValue;
+import calang.types.BytesValue;
+import calang.types.ProgramValue;
 
 import java.util.List;
 

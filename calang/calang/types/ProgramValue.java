@@ -1,5 +1,3 @@
-package calang.types.builtin;
-
-import calang.types.TypedValue;
+package calang.types;
 
 public class ProgramValue implements TypedValue<ProgramValue> {}

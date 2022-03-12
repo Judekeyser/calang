@@ -3,9 +3,8 @@ package calang;
 import calang.instructions.*;
 import calang.scopes.Scope;
 import calang.scopes.operator.WritableOperatorMap;
-import calang.types.Operator;
-import calang.types.TypedValue;
-import calang.types.builtin.*;
+import calang.scopes.Operator;
+import calang.types.*;
 
 import java.util.*;
 import java.util.stream.*;

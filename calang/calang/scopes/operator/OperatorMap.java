@@ -2,7 +2,7 @@ package calang.scopes.operator;
 
 import calang.rejections.Rejections;
 import calang.types.TypedValue;
-import calang.types.Operator;
+import calang.scopes.Operator;
 
 public interface OperatorMap {
 

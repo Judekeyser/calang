@@ -1,6 +1,6 @@
 package calang.scopes.operator;
 
-import calang.types.Operator;
+import calang.scopes.Operator;
 import calang.types.TypedValue;
 
 import java.util.HashMap;
