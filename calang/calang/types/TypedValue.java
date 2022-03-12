@@ -1,3 +1,3 @@
 package calang.types;
 
-public interface TypedValue<S extends TypedValue<S, V> /* Fluent API: S is Self type */ , V /* Value type */> {}
+public interface TypedValue<S extends TypedValue<S> /* Fluent API: S is Self type */> {}

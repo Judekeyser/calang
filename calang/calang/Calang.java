@@ -1,14 +1,14 @@
 package calang;
 
 import calang.instructions.*;
+import calang.scopes.Scope;
+import calang.scopes.operator.WritableOperatorMap;
 import calang.types.Operator;
-import calang.types.Operators;
 import calang.types.TypedValue;
 import calang.types.builtin.*;
 
 import java.util.*;
 import java.util.stream.*;
-import java.util.function.Function;
 
 import static calang.rejections.Rejections.*;
 import static java.util.Collections.emptyList;
@@ -16,8 +16,8 @@ import static java.util.Collections.singletonList;
 import static java.util.function.Predicate.not;
 
 public class Calang {
-    final Map<String, Class<? extends TypedValue<?, ?>>> TOKENS;
-    final Map<Class<? extends TypedValue<?, ?>>, Map<String, Operator<?>>> OPERATORS;
+    final Map<String, Class<? extends TypedValue<?>>> TOKENS;
+    final WritableOperatorMap operatorsMap;
 
     protected Calang() {
         TOKENS = new HashMap<>(Map.of(
@@ -26,39 +26,37 @@ public class Calang {
                 "BOOLEAN", BooleanValue.class,
                 "PROGRAM", ProgramValue.class
         ));
-        OPERATORS = new HashMap<>();
+        operatorsMap = WritableOperatorMap.ofMap();
         {
-            addOperator(IntegerValue.class, "-", Operators.describes(IntegerValue.class, IntegerValue.class, singletonList(IntegerValue.class)));
-            addOperator(IntegerValue.class, "+", Operators.describes(IntegerValue.class, IntegerValue.class, IntegerValue.class));
-            addOperator(IntegerValue.class, "prec", Operators.describes(IntegerValue.class, IntegerValue.class, emptyList()));
-            addOperator(IntegerValue.class, "succ", Operators.describes(IntegerValue.class, IntegerValue.class, emptyList()));
+            addOperator(IntegerValue.class, "NEQ", BooleanValue.class, singletonList(IntegerValue.class));
+            addOperator(IntegerValue.class, "PREC", IntegerValue.class, emptyList());
+            addOperator(IntegerValue.class, "SUCC", IntegerValue.class, emptyList());
         }
         {
-            addOperator(BytesValue.class, "|.|", Operators.describes(BytesValue.class, IntegerValue.class, emptyList()));
+            addOperator(BytesValue.class, "|.|", IntegerValue.class, emptyList());
         }
         {
-            addOperator(BooleanValue.class, "NEGATE",  Operators.describes(BooleanValue.class, BooleanValue.class, emptyList()));
-            addOperator(BooleanValue.class, "AND",     Operators.describes(BooleanValue.class, BooleanValue.class, BooleanValue.class));
-            addOperator(BooleanValue.class, "OR",      Operators.describes(BooleanValue.class, BooleanValue.class, BooleanValue.class));
-            addOperator(BooleanValue.class, "XAND",    Operators.describes(BooleanValue.class, BooleanValue.class, BooleanValue.class));
-            addOperator(BooleanValue.class, "IMPLIES", Operators.describes(BooleanValue.class, BooleanValue.class, singletonList(IntegerValue.class)));
+            addOperator(BooleanValue.class, "NEGATE", BooleanValue.class, emptyList());
+            addOperator(BooleanValue.class, "AND",BooleanValue.class, BooleanValue.class);
+            addOperator(BooleanValue.class, "OR", BooleanValue.class, BooleanValue.class);
+            addOperator(BooleanValue.class, "XAND", BooleanValue.class, BooleanValue.class);
+            addOperator(BooleanValue.class, "XOR", BooleanValue.class, BooleanValue.class);
+            addOperator(BooleanValue.class, "IMPLIES", BooleanValue.class, singletonList(IntegerValue.class));
         }
     }
 
-    public final void addType(String typeIdentifier, Class<? extends TypedValue<?, ?>> typeFactory) {
+    public final <T extends TypedValue<T>> void addType(String typeIdentifier, Class<T> typeFactory) {
         TOKENS.put(typeIdentifier, typeFactory);
     }
 
-    @SuppressWarnings("unchecked")
-    public final <T extends TypedValue<T, ?>> void addOperator(Class<T> clz, String operatorName, Operator<T> operator) {
-        if (OPERATORS.containsKey(clz)) {
-            var ops = (Map<String, Operator<T>>) (Map<?,?>) OPERATORS.get(clz);
-            ops.put(operatorName, operator);
-        }
-        else {
-            OPERATORS.put(clz, new HashMap<>());
-            addOperator(clz, operatorName, operator);
-        }
+    public final <T extends TypedValue<T>, R extends TypedValue<R>> void addOperator(Class<T> clz, String operatorName,
+                                                               Class<R> returnType,
+                                                               List<Class<? extends TypedValue<?>>> typeChecker) {
+        operatorsMap.addOperator(clz, operatorName, returnType, typeChecker);
+    }
+    public final <T extends TypedValue<T>, R extends TypedValue<R>> void addOperator(Class<T> clz, String operatorName,
+                                                               Class<R> returnType, Class<? extends TypedValue<?>> typeChecker) {
+        operatorsMap.addOperator(clz, operatorName, returnType, typeChecker);
     }
 
     /******************************************************************** */
@@ -90,7 +88,7 @@ public class Calang {
         if (lines.stream().anyMatch(String::isBlank)) {
             return parse(lines.stream().filter(not(String::isBlank)).toList());
         }
-        HashMap<String, Class<? extends TypedValue<?, ?>>> variables;
+        HashMap<String, Class<? extends TypedValue<?>>> variables;
         ArrayList<String> inputs;
         ArrayList<String> outputs;
         {
@@ -112,13 +110,22 @@ public class Calang {
         }
         Scope scope = new Scope() {
             @Override
-            public Optional<Class<? extends TypedValue<?, ?>>> symbol(String symbName) {
-                return Optional.ofNullable(variables.get(symbName));
+            @SuppressWarnings("unchecked")
+            public <T extends TypedValue<T>> Class<T> typeOf(String token) {
+                var type = variables.get(token);
+                if(type == null)
+                    throw UNKNOWN_VARIABLE.error(token);
+                return (Class<T>) type;
             }
 
             @Override
             public List<String> symbolList() {
                 return new ArrayList<>(variables.keySet());
+            }
+
+            @Override
+            public <T extends TypedValue<T>> Operator<T> maybeOperator(Class<T> typedValue, String operatorName) {
+                return operatorsMap.maybeOperator(typedValue, operatorName);
             }
         };
 
@@ -149,12 +156,7 @@ public class Calang {
                         class Impl implements ComptInstructionMk<Void> {
                             @Override
                             public Void computeInstruction(String targetSymbol, String baseSymbol, String operator, List<String> parameterSymbols) {
-                                var op = OPERATORS.get(scope.getOrDie(baseSymbol)).get(operator);
-                                if(op == null)
-                                    throw UNSUPPORTED_OPERATOR.error(operator, baseSymbol);
-                                var types = parameterSymbols.stream().map(scope::getOrDie).toList();
-                                if(! op.doesAccept(types))
-                                    throw UNAPPLICABLE_OPERATOR.error(operator, baseSymbol, Arrays.toString(types.stream().map(Class::getSimpleName).toArray()));
+                                scope.assertOperatorUsageValid(baseSymbol, targetSymbol, operator, parameterSymbols);
                                 return null;
                             }
                         } new Impl().makeInstruction(tokens);
@@ -204,10 +206,6 @@ public class Calang {
     }
 
     /******************************************************************** */
-
-    protected String transpileType(TypedValue<?, ?> value) {
-        throw NON_TRANSPILED_TYPE.error(value.getClass());
-    }
 
     protected List<String> transpile(String programName, Program program) {
         throw NON_TRANSPILED_PROGRAM.error(programName);

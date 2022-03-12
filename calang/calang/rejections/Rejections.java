@@ -8,6 +8,7 @@ public enum Rejections {
     UNKNOWN_VARIABLE("The requested scope does not contain any reference to %s symbol"),
     UNSUPPORTED_OPERATOR("Unsupported operator %s on %s"),
     UNAPPLICABLE_OPERATOR("Operator %s on %s cannot be applied on types %s"),
+    UNSTORABLE_OPERATOR_RESULT("Result of operator %s on %s cannot be stored in variable of type %s"),
     UNRECOGNIZED_INSTRUCTION_TOKEN("Unrecognized instruction token %s"),
     UNRECOGNIZED_PERFORM_DECORATOR("Unrecognized <PERFORM> instruction decorator %s"),
     MALFORMED_PERFORM_INSTRUCTION("Malformed expression PERFORM |%s|"),

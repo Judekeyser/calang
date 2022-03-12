@@ -32,8 +32,8 @@ public class CalangParseE2ETest {
         assertEquals("BEGIN", program.headParagraphName());
 
         var scope = program.scope();
-        assertSame(BytesValue.class, scope.symbol("$MESSAGE").orElseThrow(AssertionError::new));
-        assertSame(IntegerValue.class, scope.symbol("$LENGTH").orElseThrow(AssertionError::new));
+        assertSame(BytesValue.class, scope.typeOf("$MESSAGE"));
+        assertSame(IntegerValue.class, scope.typeOf("$LENGTH"));
 
         var main = program.paragraph(program.headParagraphName());
         assertEquals(3, main.instructions().size());
@@ -54,8 +54,8 @@ public class CalangParseE2ETest {
         assertEquals("START", program.headParagraphName());
 
         var scope = program.scope();
-        assertSame(BytesValue.class, scope.symbol("$CHUNK").orElseThrow(AssertionError::new));
-        assertSame(IntegerValue.class, scope.symbol("$LENGTH").orElseThrow(AssertionError::new));
+        assertSame(BytesValue.class, scope.typeOf("$CHUNK"));
+        assertSame(IntegerValue.class, scope.typeOf("$LENGTH"));
 
         var main = program.paragraph(program.headParagraphName());
         assertEquals(1, main.instructions().size());
@@ -100,13 +100,13 @@ public class CalangParseE2ETest {
                   STORE IN $FLAG 1
                   PERFORM PRINT_COLUMN WHILE $FLAG
                   PRINT \\n
-                  COMPT IN $FLAG $HEIGHT - $LOCAL_HEIGHT
-                  COMPT IN $LOCAL_HEIGHT $LOCAL_HEIGHT succ
+                  COMPT IN $FLAG $HEIGHT NEQ $LOCAL_HEIGHT
+                  COMPT IN $LOCAL_HEIGHT $LOCAL_HEIGHT SUCC
 
                 PRINT_COLUMN.
                   PRINT #
-                  COMPT IN $FLAG $LOCAL_HEIGHT - $CURSOR
-                  COMPT IN $CURSOR $CURSOR succ
+                  COMPT IN $FLAG $LOCAL_HEIGHT NEQ $CURSOR
+                  COMPT IN $CURSOR $CURSOR SUCC
                 """);
 
         assertTrue(program.getDeclaredInputs().contains("$HEIGHT"));
@@ -126,10 +126,10 @@ public class CalangParseE2ETest {
         var scope = program.scope();
         assertTrue(List.of("$HEIGHT", "$LOCAL_HEIGHT", "$CURSOR", "$FLAG").containsAll(scope.symbolList()));
 
-        assertSame(IntegerValue.class, scope.symbol("$HEIGHT").orElseThrow(AssertionError::new));
-        assertSame(IntegerValue.class, scope.symbol("$LOCAL_HEIGHT").orElseThrow(AssertionError::new));
-        assertSame(IntegerValue.class, scope.symbol("$CURSOR").orElseThrow(AssertionError::new));
-        assertSame(BooleanValue.class, scope.symbol("$FLAG").orElseThrow(AssertionError::new));
+        assertSame(IntegerValue.class, scope.typeOf("$HEIGHT"));
+        assertSame(IntegerValue.class, scope.typeOf("$LOCAL_HEIGHT"));
+        assertSame(IntegerValue.class, scope.typeOf("$CURSOR"));
+        assertSame(BooleanValue.class, scope.typeOf("$FLAG"));
     }
 
     static List<String> toLines(String input) {

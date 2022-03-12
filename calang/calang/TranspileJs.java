@@ -1,5 +1,6 @@
 package calang;
 
+import calang.scopes.Scope;
 import calang.types.TypedValue;
 
 import java.util.*;
@@ -9,7 +10,7 @@ import static java.util.function.Predicate.not;
 
 public class TranspileJs extends Calang {
 
-    protected String transpileType(Class<? extends TypedValue<?, ?>> value) {
+    protected String transpileType(Class<? extends TypedValue<?>> value) {
         return "Calang['%s']".formatted(value.getSimpleName());
     }
 
@@ -37,10 +38,10 @@ public class TranspileJs extends Calang {
         var linesToWrite = new ArrayList<String>();
         linesToWrite.add("var %s = (function() {%nvar def = function({ %s }) { this.printer = new Print();".formatted(programName, String.join(", ", inputs)));
         for (var s : scope.symbolList()) {
-            linesToWrite.add("  %s = %s.newInstance();".formatted(fVar(s), transpileType(scope.getOrDie(s))));
+            linesToWrite.add("  %s = %s.newInstance();".formatted(fVar(s), transpileType(scope.typeOf(s))));
             if (inputs.contains(s)) linesToWrite.add("    %s.setValue(%s);".formatted(fVar(s), s));
         }
-        linesToWrite.add("};%ndef.prototype = {".formatted());
+        linesToWrite.add("};%sdef.prototype = {".formatted(System.lineSeparator()));
         for (var name : program.paragraphNames()) {
             linesToWrite.add("  %s: async function() {".formatted(fPar(name)));
             var paragraph = program.paragraph(name);
@@ -80,11 +81,7 @@ public class TranspileJs extends Calang {
     @Override
     protected List<String> transpileStoreInstruction(Scope scope, String targetSymbol, String sourceSymbol) {
         var target = fVar(targetSymbol);
-        String value;
-        {
-            if (scope.symbol(sourceSymbol).isPresent()) value = fVar(sourceSymbol);
-            else value = "\"%s\"".formatted(sourceSymbol);
-        }
+        String value = scope.isSymbolDeclared(sourceSymbol) ? fVar(sourceSymbol) : "\"%s\"".formatted(sourceSymbol);
         var line = "%s.setValue(%s);".formatted(target, value);
         return Collections.singletonList(line);
     }
@@ -101,7 +98,7 @@ public class TranspileJs extends Calang {
 
     @Override
     protected List<String> transpilePrintInstruction(Scope scope, List<String> tokens) {
-        var words = tokens.stream().map(t -> scope.symbol(t).isPresent() ? "${%s.getValue()}".formatted(fVar(t)) : t).collect(Collectors.joining(" "));
+        var words = tokens.stream().map(t -> scope.isSymbolDeclared(t) ? "${%s.getValue()}".formatted(fVar(t)) : t).collect(Collectors.joining(" "));
         var line = "this.printer.append(`%s`);".formatted(words);
         return Collections.singletonList(line);
     }
@@ -109,10 +106,7 @@ public class TranspileJs extends Calang {
     @Override
     protected List<String> transpileCallInstruction(Scope scope, String programName, List<VariableBinding> in, List<VariableBinding> out) {
         var lines = new ArrayList<String>();
-        String programIdentifier;
-        {
-            programIdentifier = scope.symbol(programName).isPresent() ? "%s.getValue().bindWith".formatted(fVar(programName)) : "new %s".formatted(programName);
-        }
+        String programIdentifier = scope.isSymbolDeclared(programName) ? "%s.getValue().bindWith".formatted(fVar(programName)) : "new %s".formatted(programName);
         lines.add("await %s({ %s }).run()".formatted(programIdentifier, in.stream().map(b -> "%s:%s".formatted(b.childSymb(), fVar(b.parentSymb()))).collect(Collectors.joining(","))));
         {
             lines.add(".then(__ => {");

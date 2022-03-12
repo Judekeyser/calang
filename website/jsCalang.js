@@ -72,10 +72,9 @@ class IntegerValue extends TypedValue {
   }
 
   static operatorTable = {
-      "+": (v, args) => IntegerValue.of(v + args.map(IntegerValue.toInt).reduce((a,b) => a+b)),
-      "-": (v, args) => IntegerValue.of(v - IntegerValue.toInt(args[0])),
-      "succ": (v, args) => IntegerValue.of(v + 1),
-      "prec": (v, args) => IntegerValue.of(v - 1),
+      "NEQ": (v, args) => BooleanValue.of(v != IntegerValue.toInt(args[0])),
+      "SUCC": (v, args) => IntegerValue.of(v + 1),
+      "PREC": (v, args) => IntegerValue.of(v - 1),
     };
 
   static toInt(any) {
@@ -100,11 +99,11 @@ class BooleanValue extends TypedValue {
   }
 
   static operatorTable = {
-    "NEGATE": (v, args) =>  BooleanValue.of(!v),
-    "XOR": (v, args) =>     BooleanValue.of(TypedValue.reduceArgs(v, args, (a, b) => a ^  b)),
-    "AND": (v, args) =>     BooleanValue.of(TypedValue.reduceArgs(v, args, (a, b) => a && b)),
-    "OR": (v, args) =>      BooleanValue.of(TypedValue.reduceArgs(v, args, (a, b) => a || b)),
-    "XAND": (v, args) =>    BooleanValue.of(TypedValue.reduceArgs(v, args, (a, b) => !((a || b) && (!(a && b))))),
+    "NEGATE" : (v, args) => BooleanValue.of(!v),
+    "XOR"    : (v, args) => BooleanValue.of(TypedValue.reduceArgs(v, args, (a, b) => !!(a ^ b))),
+    "AND"    : (v, args) => BooleanValue.of(TypedValue.reduceArgs(v, args, (a, b) => a && b)),
+    "OR"     : (v, args) => BooleanValue.of(TypedValue.reduceArgs(v, args, (a, b) => a || b)),
+    "XAND"   : (v, args) => BooleanValue.of(TypedValue.reduceArgs(v, args, (a, b) => !(a ^ b))),
     "IMPLIES": (v, args) => BooleanValue.of(!v || args[0].getValue())
   };
 

@@ -6,8 +6,7 @@ import calang.types.builtin.BytesValue;
 import calang.types.builtin.IntegerValue;
 import org.junit.Test;
 
-import java.util.function.Predicate;
-
+import static java.util.Collections.emptyList;
 import static org.junit.Assert.*;
 
 /**
@@ -19,30 +18,25 @@ public class CalangTest {
     public void basicCalang_shouldSupport_basicTypes() {
         var calang = new Calang();
 
-        checkMany("Basic Calang should support %s type",
-                calang.TOKENS::containsKey,
-                "INTEGER", "PROGRAM", "BYTES", "BOOLEAN"
-        );
+        for (String s : new String[]{"INTEGER", "PROGRAM", "BYTES", "BOOLEAN"})
+            assertTrue("Basic Calang should support %s type".formatted(s), calang.TOKENS.containsKey(s));
     }
 
     @Test
     public void basicCalang_shouldSupport_basicOperators() {
         var calang = new Calang();
 
-        checkMany("Basic Calang should support %s operator on INTEGER",
-                calang.OPERATORS.get(IntegerValue.class)::containsKey,
-                "+", "-", "prec", "succ"
-        );
+        for (String s : new String[]{"NEQ", "PREC", "SUCC"})
+            assertNotNull("Basic Calang should support %s operator on INTEGER".formatted(s),
+                    calang.operatorsMap.maybeOperator(IntegerValue.class, s));
 
-        checkMany("Basic Calang should support %s operator on BOOLEAN",
-                calang.OPERATORS.get(BooleanValue.class)::containsKey,
-                "NEGATE"
-        );
+        for (String s : new String[]{"NEGATE", "AND", "OR", "XAND", "XOR", "IMPLIES"})
+            assertNotNull("Basic Calang should support %s operator on BOOLEAN".formatted(s),
+                    calang.operatorsMap.maybeOperator(BooleanValue.class, s));
 
-        checkMany("Basic Calang should support %s operator on BYTES",
-                calang.OPERATORS.get(BytesValue.class)::containsKey,
-                "|.|"
-        );
+        for (String s : new String[]{"|.|"})
+            assertNotNull("Basic Calang should support %s operator on BYTES".formatted(s),
+                    calang.operatorsMap.maybeOperator(BytesValue.class, s));
     }
 
     @Test
@@ -52,7 +46,7 @@ public class CalangTest {
 
         assertFalse(calang.TOKENS.containsKey(magnet));
 
-        class MyType implements TypedValue<MyType, Object> {}
+        class MyType implements TypedValue<MyType> {}
 
         calang.addType(magnet, MyType.class);
 
@@ -64,19 +58,9 @@ public class CalangTest {
     public void basicCalang_shouldSupport_addOperator() {
         var calang = new Calang();
 
-        calang.addOperator(IntegerValue.class, "|.|", null);
+        calang.addOperator(IntegerValue.class, "|.|", IntegerValue.class, emptyList());
 
-        assertTrue(calang.OPERATORS.get(IntegerValue.class).containsKey("|.|"));
-    }
-
-    @SafeVarargs
-    static <T> void checkMany(String messageTplOnError, Predicate<T> p, T... tokens) {
-        for(var token : tokens)
-            check(messageTplOnError, p, token);
-    }
-
-    static <T> void check(String messageTplOnError, Predicate<T> p, T token) {
-        assertTrue(messageTplOnError.formatted(token), p.test(token));
+        assertNotNull(calang.operatorsMap.maybeOperator(IntegerValue.class, "|.|"));
     }
 
 }

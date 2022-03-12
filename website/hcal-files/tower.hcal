@@ -21,9 +21,7 @@ column cursor to print, we require some local variables:</p>
     <li>The <dfn><code>$CURSOR: INTEGER</code></dfn> is the current column we draw</li>
 </ul>
 <p>We also introduce a boolean flag <dfn><code>$FLAG: BOOLEAN</code></dfn>
-to keep track or whether to stop or not. <b>We draw the reader attention to</b>
-our usage of weak calang.types here, as we are going to use the property over booleans that
-integer 0 is falsy, the others are truly.</p>
+to keep track or whether to stop or not.</p>
 
 <hr>
 
@@ -43,8 +41,8 @@ PERFORM <a href="#PRINT_COLUMN">print column</a> WHILE $FLAG</code></pre>
 and the auxiliary <code>$LOCAL_HEIGHT</code> helper:</p>
 
 <pre><code>PRINT \n
-COMPT IN $FLAG $HEIGHT - $LOCAL_HEIGHT
-COMPT IN $LOCAL_HEIGHT $LOCAL_HEIGHT succ</code></pre>
+COMPT IN $FLAG $HEIGHT NEQ $LOCAL_HEIGHT
+COMPT IN $LOCAL_HEIGHT $LOCAL_HEIGHT SUCC</code></pre>
 
 <p>In particular, at the end of the <a href="#PRINT_LINE">print-line</a> block, we guarantee
 the boolean flag <code>$FLAG</code> contains whether or not the program should stop
@@ -57,8 +55,8 @@ More precisely, from the pre-conditions that <code>$CURSOR</code> equals 1, and
 <code>$FLAG</code> is true, printing column is defined as the process:</p>
 
 <pre><code>PRINT #
-COMPT IN $FLAG $LOCAL_HEIGHT - $CURSOR
-COMPT IN $CURSOR $CURSOR succ</code></pre>
+COMPT IN $FLAG $LOCAL_HEIGHT NEQ $CURSOR
+COMPT IN $CURSOR $CURSOR SUCC</code></pre>
 
 
 </section>

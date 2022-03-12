@@ -87,16 +87,16 @@ while(this.$FLAG.getValue()) await this.__PRINT_LINE();
   },
   __PRINT_COLUMN: async function() {
 this.printer.append(`#`);
-this.$FLAG.setValue(this.$LOCAL_HEIGHT.sendMessage("-", [this.$CURSOR]));
-this.$CURSOR.setValue(this.$CURSOR.sendMessage("succ", []));
+this.$FLAG.setValue(this.$LOCAL_HEIGHT.sendMessage("NEQ", [this.$CURSOR]));
+this.$CURSOR.setValue(this.$CURSOR.sendMessage("SUCC", []));
   },
   __PRINT_LINE: async function() {
 this.$CURSOR.setValue("1");
 this.$FLAG.setValue("1");
 while(this.$FLAG.getValue()) await this.__PRINT_COLUMN();
 this.printer.append(`\n`);
-this.$FLAG.setValue(this.$HEIGHT.sendMessage("-", [this.$LOCAL_HEIGHT]));
-this.$LOCAL_HEIGHT.setValue(this.$LOCAL_HEIGHT.sendMessage("succ", []));
+this.$FLAG.setValue(this.$HEIGHT.sendMessage("NEQ", [this.$LOCAL_HEIGHT]));
+this.$LOCAL_HEIGHT.setValue(this.$LOCAL_HEIGHT.sendMessage("SUCC", []));
   },
   run: async function() { await this.__MAIN(); this.printer.flush(); return {  }; }
 };
