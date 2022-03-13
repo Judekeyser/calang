@@ -2,6 +2,7 @@ package calang;
 
 import calang.instructions.*;
 import calang.model.*;
+import calang.model.algebra.GraphLinks;
 import calang.model.algebra.WithScopeAndOperators;
 import calang.model.operator.OperatorMap;
 import calang.model.operator.WritableOperatorMap;
@@ -66,7 +67,7 @@ public class Calang {
     /******************************************************************** */
 
     public interface PreInstruction {
-        List<String> transpile(Scope scope);
+        List<String> transpile(Program<PreInstruction> program);
     }
 
     protected Program<PreInstruction> parse(List<String> lines) {
@@ -155,6 +156,38 @@ public class Calang {
                                 return null;
                             }
                         } new Impl().makeInstruction(tokens);
+                    } else if (mk instanceof CallInstructionMk<PreInstruction> callMk) {
+                        record Combined(PreInstruction wrapped) implements GraphLinks.CallPreInstruction, PreInstruction {
+                            @Override
+                            public List<String> transpile(Program<PreInstruction> p) {
+                                return Combined.this.wrapped.transpile(p);
+                            }
+                        }
+                        mk = t -> new Combined(callMk.makeInstruction(t));
+                    } else if (mk instanceof PerformInstructionMk<PreInstruction> performMk) {
+                        record Combined(PreInstruction wrapped, List<String> dependentParagraphs) implements GraphLinks.PerformPreInstruction, PreInstruction {
+                            @Override
+                            public List<String> transpile(Program<PreInstruction> p) {
+                                return Combined.this.wrapped.transpile(p);
+                            }
+                        }
+                        class Spy implements PerformInstructionMk<Void> {
+                            List<String> paragraphNames;
+                            @Override
+                            public Void performInstruction(String paragraphName, String alternativeParagraphName, String booleanValueSymbol, boolean isLoop, boolean isContraCondition) {
+                                paragraphNames = Stream.of(paragraphName, alternativeParagraphName)
+                                        .filter(Objects::nonNull)
+                                        .toList();
+                                return null;
+                            }
+
+                            List<String> dependentParagraphs(String[] t) {
+                                makeInstruction(t);
+                                assert paragraphNames != null;
+                                return paragraphNames;
+                            }
+                        } var dependentParagraphs = new Spy().dependentParagraphs(tokens);
+                        mk = t -> new Combined(performMk.makeInstruction(t), dependentParagraphs);
                     }
                     return mk.makeInstruction(tokens);
                 }
@@ -167,7 +200,7 @@ public class Calang {
             headParagraph = paragraphs.stream().min(Comparator.comparingInt(Par::lineIndex)).orElseThrow(NO_PARAGRAPH_FOUND::error);
         }
 
-        return new Program<>() {
+        return new Program<PreInstruction>() {
             @Override
             public String headParagraphName() {
                 return headParagraph.name();
@@ -196,23 +229,23 @@ public class Calang {
         throw NON_TRANSPILED_PROGRAM.error(programName);
     }
 
-    protected List<String> transpilePerformInstruction(Scope scope, String paragraphName, String altParagraphName, String booleanValueSymbol, boolean isLoop, boolean contraCondition) {
+    protected List<String> transpilePerformInstruction(Program<PreInstruction> program, String paragraphName, String altParagraphName, String booleanValueSymbol, boolean isLoop, boolean contraCondition) {
         throw NON_TRANSPILED_INSTRUCTION.error("PERFORM");
     }
 
-    protected List<String> transpileStoreInstruction(Scope scope, String sourceSymbol, String targetSymbol) {
+    protected List<String> transpileStoreInstruction(Program<PreInstruction> program, String sourceSymbol, String targetSymbol) {
         throw NON_TRANSPILED_INSTRUCTION.error("STORE");
     }
 
-    protected List<String> transpileComptInstruction(Scope scope, String targetSymbol, String baseSymbol, String operator, List<String> arguments) {
+    protected List<String> transpileComptInstruction(Program<PreInstruction> program, String targetSymbol, String baseSymbol, String operator, List<String> arguments) {
         throw NON_TRANSPILED_INSTRUCTION.error("COMPT");
     }
 
-    protected List<String> transpilePrintInstruction(Scope scope, List<String> tokens) {
+    protected List<String> transpilePrintInstruction(Program<PreInstruction> program, List<String> tokens) {
         throw NON_TRANSPILED_INSTRUCTION.error("PRINT");
     }
 
-    protected List<String> transpileCallInstruction(Scope scope, String programName, List<VariableBinding> in, List<VariableBinding> out) {
+    protected List<String> transpileCallInstruction(Program<PreInstruction> program, String programName, List<VariableBinding> in, List<VariableBinding> out) {
         throw NON_TRANSPILED_INSTRUCTION.error("CALL");
     }
 

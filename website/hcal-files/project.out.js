@@ -5,41 +5,41 @@ var def = function({ $CHUNK }) { this.printer = new Print();
   this.$LENGTH = Calang['IntegerValue'].newInstance();
 };
 def.prototype = {
-  __START: async function() {
+  __START:  function() {
 this.$LENGTH.setValue(this.$CHUNK.sendMessage("|.|", []));
   },
-  run: async function() { await this.__START(); this.printer.flush(); return { $LENGTH:this.$LENGTH }; }
+  run: async function() {  this.__START(); this.printer.flush(); return { $LENGTH:this.$LENGTH }; }
 };
 return def; })();
 var password_input = (function() {
 var def = function({  }) { this.printer = new Print();
   this.$MODAL_RESULT = Calang['BooleanValue'].newInstance();
   this.$MODAL_ELEMENT = Calang['ModalElementValue'].newInstance();
-  this.$TEXT_RECORD = Calang['BytesValue'].newInstance();
   this.$CLICK_PROGRAM = Calang['ProgramValue'].newInstance();
+  this.$TEXT_RECORD = Calang['BytesValue'].newInstance();
 };
 def.prototype = {
-  __MODAL_CLOSE: async function() {
+  __MODAL_CLOSE:  function() {
 this.$MODAL_ELEMENT.setValue(this.$MODAL_ELEMENT.sendMessage("close!", []));
   },
-  __MODAL_OPEN: async function() {
+  __MODAL_OPEN:  function() {
 this.$MODAL_ELEMENT.setValue(this.$MODAL_ELEMENT.sendMessage("display!", []));
   },
   __START: async function() {
-await this.__MODAL_OPEN();
+ this.__MODAL_OPEN()
 this.$CLICK_PROGRAM.setValue(this.$MODAL_ELEMENT.sendMessage("...", []));
 await this.$CLICK_PROGRAM.getValue().bindWith({  }).run()
 .then(__ => {
   this.$MODAL_RESULT.setValue(__.$RES);
 })
 ;
-if(this.$MODAL_RESULT.getValue()) await this.__USER_CONFIRMS(); else await this.__USER_CANCELS();
-await this.__MODAL_CLOSE();
+if(this.$MODAL_RESULT.getValue())  this.__USER_CONFIRMS(); else  this.__USER_CANCELS();
+ this.__MODAL_CLOSE()
   },
-  __USER_CANCELS: async function() {
+  __USER_CANCELS:  function() {
 this.printer.append(`Good bye user, you'll be missed`);
   },
-  __USER_CONFIRMS: async function() {
+  __USER_CONFIRMS:  function() {
 this.$TEXT_RECORD.setValue(this.$MODAL_ELEMENT.sendMessage("?", []));
 this.printer.append(`Warm greeting, password is ${this.$TEXT_RECORD.getValue()}`);
   },
@@ -80,24 +80,24 @@ var def = function({ $HEIGHT }) { this.printer = new Print();
     this.$HEIGHT.setValue($HEIGHT);
 };
 def.prototype = {
-  __MAIN: async function() {
+  __MAIN:  function() {
 this.$LOCAL_HEIGHT.setValue("1");
 this.$FLAG.setValue(this.$HEIGHT);
-while(this.$FLAG.getValue()) await this.__PRINT_LINE();
+while(this.$FLAG.getValue())  this.__PRINT_LINE();
   },
-  __PRINT_COLUMN: async function() {
+  __PRINT_COLUMN:  function() {
 this.printer.append(`#`);
 this.$FLAG.setValue(this.$LOCAL_HEIGHT.sendMessage("NEQ", [this.$CURSOR]));
 this.$CURSOR.setValue(this.$CURSOR.sendMessage("SUCC", []));
   },
-  __PRINT_LINE: async function() {
+  __PRINT_LINE:  function() {
 this.$CURSOR.setValue("1");
 this.$FLAG.setValue("1");
-while(this.$FLAG.getValue()) await this.__PRINT_COLUMN();
+while(this.$FLAG.getValue())  this.__PRINT_COLUMN();
 this.printer.append(`\n`);
 this.$FLAG.setValue(this.$HEIGHT.sendMessage("NEQ", [this.$LOCAL_HEIGHT]));
 this.$LOCAL_HEIGHT.setValue(this.$LOCAL_HEIGHT.sendMessage("SUCC", []));
   },
-  run: async function() { await this.__MAIN(); this.printer.flush(); return {  }; }
+  run: async function() {  this.__MAIN(); this.printer.flush(); return {  }; }
 };
 return def; })();

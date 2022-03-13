@@ -2,6 +2,8 @@ package calang.instructions;
 
 import org.junit.Test;
 
+import java.util.List;
+
 import static org.junit.Assert.assertArrayEquals;
 
 public class PerformInstructionMkTest extends InstructionMkTestTemplate {
@@ -45,12 +47,8 @@ public class PerformInstructionMkTest extends InstructionMkTestTemplate {
         class Spy implements PerformInstructionMk<Object[]> {
             @Override
             public Object[] performInstruction(String paragraphName, String alternativeParagraphName, String booleanValueSymbol, boolean isLoop, boolean isContraCondition) {
-                return new Object[] {
-                        paragraphName,
-                        alternativeParagraphName,
-                        booleanValueSymbol,
-                        isLoop,
-                        isContraCondition
+                return new Object[]{
+                        paragraphName, alternativeParagraphName, booleanValueSymbol, isLoop, isContraCondition
                 };
             }
         }
