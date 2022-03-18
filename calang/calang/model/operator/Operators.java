@@ -1,11 +1,10 @@
 package calang.model.operator;
 
-import calang.model.TypedValue;
-import calang.model.Operator;
+import calang.model.types.TypedValue;
 
 import java.util.List;
 
-public class Operators {
+class Operators {
 
     private static abstract class WithReturnType<T extends TypedValue<T>> implements Operator<T> {
         private final Class<?> returnType;

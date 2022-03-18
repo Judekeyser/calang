@@ -1,11 +1,13 @@
 package calang.model.operator;
 
-import calang.model.Operator;
-import calang.model.TypedValue;
+import calang.model.types.*;
 import calang.rejections.Rejections;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 public interface WritableOperatorMap extends OperatorMap, OperatorRegisterer {
 
@@ -15,9 +17,26 @@ public interface WritableOperatorMap extends OperatorMap, OperatorRegisterer {
     @Override
     <T extends TypedValue<T>> void registerOperator(Class<T> clz, String operatorName, Operator<T> operator);
 
-    static WritableOperatorMap newWritableOperatorMap() {
+    static WritableOperatorMap getMutableDefaultOperatorMap() {
         return new WritableOperatorMap() {
-            private final Map<Class<? extends TypedValue<?>>, Map<String, ? extends Operator<?>>> map = new HashMap<>();
+            private final Map<Class<? extends TypedValue<?>>, Map<String, ? extends Operator<?>>> map = new HashMap<>() {{
+                put(IntegerValue.class, new HashMap<>());
+                put(BytesValue.class, new HashMap<>());
+                put(BooleanValue.class, new HashMap<>());
+                put(ProgramValue.class, new HashMap<>());
+            }};
+            {
+                registerOperator(IntegerValue.class, "NEQ", BooleanValue.class, singletonList(IntegerValue.class));
+                registerOperator(IntegerValue.class, "PREC", IntegerValue.class, emptyList());
+                registerOperator(IntegerValue.class, "SUCC", IntegerValue.class, emptyList());
+                registerOperator(BytesValue.class, "|.|", IntegerValue.class, emptyList());
+                registerOperator(BooleanValue.class, "NEGATE", BooleanValue.class, emptyList());
+                registerOperator(BooleanValue.class, "AND", BooleanValue.class, BooleanValue.class);
+                registerOperator(BooleanValue.class, "OR", BooleanValue.class, BooleanValue.class);
+                registerOperator(BooleanValue.class, "XAND", BooleanValue.class, BooleanValue.class);
+                registerOperator(BooleanValue.class, "XOR", BooleanValue.class, BooleanValue.class);
+                registerOperator(BooleanValue.class, "IMPLIES", BooleanValue.class, singletonList(IntegerValue.class));
+            }
 
             @Override
             public <T extends TypedValue<T>> Operator<T> operatorForName(Class<T> typedValue, String operatorName) {

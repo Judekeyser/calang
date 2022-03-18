@@ -1,16 +1,16 @@
 package webengine.src;
 
+import calang.Calang;
 import calang.Tangle;
-import calang.TranspileJs;
-import calang.model.TypedValue;
-import calang.types.BytesValue;
-import calang.types.ProgramValue;
+import calang.model.types.TypedValue;
+import calang.model.types.BytesValue;
+import calang.model.types.ProgramValue;
 
 import java.util.List;
 
 import static java.util.Collections.emptyList;
 
-public abstract class MyTranspiler extends TranspileJs implements Tangle, FileContent
+public abstract class MyTranspiler extends Calang implements Tangle, FileContent
 {
 
     public static class ModalElementValue implements TypedValue<ModalElementValue> {}

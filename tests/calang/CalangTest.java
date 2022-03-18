@@ -1,9 +1,9 @@
 package calang;
 
-import calang.model.TypedValue;
-import calang.types.BooleanValue;
-import calang.types.BytesValue;
-import calang.types.IntegerValue;
+import calang.model.types.TypedValue;
+import calang.model.types.BooleanValue;
+import calang.model.types.BytesValue;
+import calang.model.types.IntegerValue;
 import org.junit.Test;
 
 import static java.util.Collections.emptyList;

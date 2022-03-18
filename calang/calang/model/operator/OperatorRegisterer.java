@@ -1,7 +1,6 @@
 package calang.model.operator;
 
-import calang.model.TypedValue;
-import calang.model.Operator;
+import calang.model.types.TypedValue;
 
 import java.util.List;
 
