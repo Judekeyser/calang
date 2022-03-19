@@ -10,16 +10,14 @@ import java.util.function.Predicate;
 
 import static java.util.function.Predicate.not;
 
-public interface VerifiedPerformInstruction<T> extends PerformInstructionMk<T> {
-
-    PerformInstructionMk<T> baseInstruction();
+public interface VerifiedPerformInstruction extends PerformInstructionMk<Void> {
 
     Paragraphs paragraphs();
 
     Scope scope();
 
     @Override
-    default T performInstruction(String paragraphName, String alternativeParagraphName, String booleanValueSymbol, boolean isLoop, boolean isContraCondition) {
+    default Void performInstruction(String paragraphName, String alternativeParagraphName, String booleanValueSymbol, boolean isLoop, boolean isContraCondition) {
         Predicate<String> absentParagraph = not(paragraphs().paragraphsByName()::containsKey);
 
         if(absentParagraph.test(paragraphName))
@@ -31,7 +29,7 @@ public interface VerifiedPerformInstruction<T> extends PerformInstructionMk<T> {
         if(flagTypeIfAny != null && ! flagTypeIfAny.equals(BooleanValue.class))
             throw Rejections.BOOLEAN_FLAG_IS_NOT_BOOLEAN.error(booleanValueSymbol, flagTypeIfAny.getSimpleName());
 
-        return baseInstruction().performInstruction(paragraphName, alternativeParagraphName, booleanValueSymbol, isLoop, isContraCondition);
+        return null;
     }
 
 }

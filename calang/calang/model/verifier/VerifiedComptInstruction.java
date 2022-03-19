@@ -11,16 +11,14 @@ import java.util.List;
 import static calang.rejections.Rejections.UNAPPLICABLE_OPERATOR;
 import static calang.rejections.Rejections.UNSTORABLE_OPERATOR_RESULT;
 
-public interface VerifiedComptInstruction<T> extends ComptInstructionMk<T> {
-
-    ComptInstructionMk<T> baseInstruction();
+public interface VerifiedComptInstruction extends ComptInstructionMk<Void> {
 
     Scope scope();
 
     OperatorMap operators();
 
     @Override
-    default T computeInstruction(String targetSymbol, String baseSymbol, String operatorName, List<String> parameterSymbols) {
+    default Void computeInstruction(String targetSymbol, String baseSymbol, String operatorName, List<String> parameterSymbols) {
         class Helper {
             Class<Dummy> hackSymbol(String token) {
                 return scope().typeOf(token);
@@ -36,7 +34,7 @@ public interface VerifiedComptInstruction<T> extends ComptInstructionMk<T> {
         if (! operator.doesAccept(parameters))
             throw UNAPPLICABLE_OPERATOR.error(operator, base.getSimpleName(), Arrays.toString(parameters.stream().map(Class::getSimpleName).toArray()));
 
-        return baseInstruction().computeInstruction(targetSymbol, baseSymbol, operatorName, parameterSymbols);
+        return null;
     }
 
 }
