@@ -1,9 +1,9 @@
 var bytelength = (function() {
 var def =
 function({ $CHUNK }) { this.printer = new Print();
-  this.$LENGTH = Calang['IntegerValue'].newInstance();
   this.$CHUNK = Calang['BytesValue'].newInstance();
     this.$CHUNK.setValue($CHUNK);
+  this.$LENGTH = Calang['IntegerValue'].newInstance();
 };
 def.prototype = {
   __START:  function() {
@@ -15,11 +15,10 @@ return def; })();
 var password_input = (function() {
 var def =
 function({  }) { this.printer = new Print();
-  this.$TEXT_RECORD = Calang['BytesValue'].newInstance();
-  this.$TEXT_RECORD = Calang['BytesValue'].newInstance();
   this.$CLICK_PROGRAM = Calang['ProgramValue'].newInstance();
   this.$MODAL_ELEMENT = Calang['ModalElementValue'].newInstance();
   this.$MODAL_RESULT = Calang['BooleanValue'].newInstance();
+  this.$TEXT_RECORD = Calang['BytesValue'].newInstance();
 };
 def.prototype = {
   __MODAL_CLOSE:  function() {
@@ -83,21 +82,13 @@ return def; })();
 var tower = (function() {
 var def =
 function({ $HEIGHT }) { this.printer = new Print();
+  this.$CURSOR = Calang['IntegerValue'].newInstance();
+  this.$FLAG = Calang['BooleanValue'].newInstance();
   this.$HEIGHT = Calang['IntegerValue'].newInstance();
     this.$HEIGHT.setValue($HEIGHT);
-  this.$FLAG = Calang['BooleanValue'].newInstance();
   this.$LOCAL_HEIGHT = Calang['IntegerValue'].newInstance();
-  this.$CURSOR = Calang['IntegerValue'].newInstance();
 };
 def.prototype = {
-  __PRINT_LINE:  function() {
-this.$CURSOR.setValue("1");
-this.$FLAG.setValue("1");
-while(this.$FLAG.getValue()) this.__PRINT_COLUMN();
-this.printer.append(`\n`);
-this.$FLAG.setValue(this.$HEIGHT.sendMessage("NEQ", [this.$LOCAL_HEIGHT]));
-this.$LOCAL_HEIGHT.setValue(this.$LOCAL_HEIGHT.sendMessage("SUCC", []));
-  },
   __MAIN:  function() {
 this.$LOCAL_HEIGHT.setValue("1");
 this.$FLAG.setValue(this.$HEIGHT);
@@ -107,6 +98,14 @@ while(this.$FLAG.getValue()) this.__PRINT_LINE();
 this.printer.append(`#`);
 this.$FLAG.setValue(this.$LOCAL_HEIGHT.sendMessage("NEQ", [this.$CURSOR]));
 this.$CURSOR.setValue(this.$CURSOR.sendMessage("SUCC", []));
+  },
+  __PRINT_LINE:  function() {
+this.$CURSOR.setValue("1");
+this.$FLAG.setValue("1");
+while(this.$FLAG.getValue()) this.__PRINT_COLUMN();
+this.printer.append(`\n`);
+this.$FLAG.setValue(this.$HEIGHT.sendMessage("NEQ", [this.$LOCAL_HEIGHT]));
+this.$LOCAL_HEIGHT.setValue(this.$LOCAL_HEIGHT.sendMessage("SUCC", []));
   },
   run: async function() { this.__MAIN(); this.printer.flush(); return {  }; }
 };

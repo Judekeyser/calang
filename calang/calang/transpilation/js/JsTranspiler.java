@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import static calang.rejections.Rejections.UNRECOGNIZED_INSTRUCTION_TOKEN;
 import static java.util.Collections.unmodifiableList;
+import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 
 public interface JsTranspiler extends Transpiler<List<String>> {
@@ -68,9 +69,10 @@ public interface JsTranspiler extends Transpiler<List<String>> {
                 linesToWrite.add("function({ %s }) { this.printer = new Print();".formatted(
                         scope.inputs().stream()
                                 .map(Scope.Declaration::name)
+                                .sorted()
                                 .collect(Collectors.joining(","))
                 ));
-                for (var s : scope.declarations()) {
+                for (var s : (Iterable< Scope.Declaration<?>>) scope.declarations().stream().sorted(comparing(Scope.Declaration::name))::iterator) {
                     linesToWrite.add("  %s = %s.newInstance();".formatted(fVar(s.name()), transpileType(s.type())));
                     if (scope.inputs().contains(s)) linesToWrite.add("    %s.setValue(%s);".formatted(fVar(s.name()), s.name()));
                 }
@@ -78,7 +80,7 @@ public interface JsTranspiler extends Transpiler<List<String>> {
             }
             { // prototype
                 linesToWrite.add("def.prototype = {");
-                for (var p : paragraphLookup.entrySet()) {
+                for (var p : (Iterable<Map.Entry<String, Paragraphs.Paragraph>>) paragraphLookup.entrySet().stream().sorted(Map.Entry.comparingByKey())::iterator) {
                     linesToWrite.add("  %s: %s function() {".formatted(fPar(p.getKey()), paragraphs().isParagraphAsynchronous(p.getKey()) ? "async" : ""));
                     for (var instr : p.getValue().tokens())
                         linesToWrite.add(requireNonNull(instructionOf(instr).makeInstruction()));
