@@ -73,7 +73,7 @@ public interface Paragraphs {
                             endLine -= 1;
                             continue point;
                         }
-                    } break;
+                    } continue consumeLine;
                 } finally {
                     assert endLine > lineCounter;
                     assert programSpecification().size() >= endLine;

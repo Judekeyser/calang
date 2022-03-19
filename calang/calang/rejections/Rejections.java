@@ -1,7 +1,6 @@
 package calang.rejections;
 
 public enum Rejections {
-    NO_PARAGRAPH_FOUND("There is no paragraph in the program.. That's unfortunate"),
     NO_MAIN_PARAGRAPH_FOUND("There is no main paragraph in the program"),
     UNDEFINED_PARAGRAPH("Unresolved paragrah named %s"),
     MALFORMED_PARAGRAPH_TITLE("Malformed paragraph title: should be non blank and ends with a dot"),
@@ -13,7 +12,7 @@ public enum Rejections {
     UNSUPPORTED_OPERATOR("Unsupported operator %s on %s"),
     UNAPPLICABLE_OPERATOR("Operator %s on %s cannot be applied on types %s"),
     UNSTORABLE_OPERATOR_RESULT("Result of operator %s on %s cannot be stored in variable of type %s"),
-    UNRECOGNIZED_INSTRUCTION_TOKEN("Unrecognized instruction token %s"),
+    UNRECOGNIZED_INSTRUCTION_TOKEN("Unrecognized instruction token %s"), // TODO: Remove that from JsTranspiler
     UNRECOGNIZED_PERFORM_DECORATOR("Unrecognized <PERFORM> instruction decorator %s"),
     MALFORMED_DECLARATION_LINE("Malformed declaration line |%s|"),
     MALFORMED_PERFORM_INSTRUCTION("Malformed expression PERFORM |%s|"),

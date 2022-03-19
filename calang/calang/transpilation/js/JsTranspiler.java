@@ -28,6 +28,7 @@ public interface JsTranspiler extends Transpiler<List<String>> {
     }
 
     default String runProgram(String programSymbol, List<VariableBinding> inputs, List<VariableBinding> outputs) {
+        programSymbol = programOf(programSymbol);
         return """
                 await %s({
                 %s
@@ -88,7 +89,7 @@ public interface JsTranspiler extends Transpiler<List<String>> {
                 }
                 {
                     linesToWrite.add("  run: async function() { %s; this.printer.flush(); return { %s }; }".formatted(
-                            callParagraph(paragraphs().headParagraph()),
+                            callParagraph(paragraphs().headParagraph(), paragraphs().isParagraphAsynchronous(paragraphs().headParagraph())),
                             scope.outputs().stream()
                                     .map(Scope.Declaration::name)
                                     .map(t -> "%s:%s".formatted(t, fVar(t)))
@@ -116,17 +117,18 @@ public interface JsTranspiler extends Transpiler<List<String>> {
                     @Override
                     public String performInstruction(String paragraphName, String altParagraphName, String booleanValueSymbol, boolean isLoop, boolean isContraCondition) {
                         String line;
+                        var isAsync = paragraphs().isParagraphAsynchronous(paragraphName);
 
                         if(booleanValueSymbol == null)
-                            line = callParagraph(paragraphName);
+                            line = callParagraph(paragraphName, isAsync);
                         else if (isLoop)
-                            line = printWhile(booleanValueSymbol, callParagraph(paragraphName));
+                            line = printWhile(booleanValueSymbol, callParagraph(paragraphName, isAsync));
                         else if (isContraCondition)
-                            line = printIfNot(booleanValueSymbol, paragraphName);
+                            line = printIfNot(booleanValueSymbol, callParagraph(paragraphName, isAsync));
                         else if (altParagraphName != null)
-                            line = printIfElse(booleanValueSymbol, paragraphName, altParagraphName);
+                            line = printIfElse(booleanValueSymbol, callParagraph(paragraphName, isAsync), callParagraph(altParagraphName, paragraphs().isParagraphAsynchronous(altParagraphName)));
                         else
-                            line = printIf(booleanValueSymbol, paragraphName);
+                            line = printIf(booleanValueSymbol, callParagraph(paragraphName, isAsync));
                         return line;
                     }
                 } yield new Impl();
@@ -159,7 +161,7 @@ public interface JsTranspiler extends Transpiler<List<String>> {
                 class Impl extends Template implements CallInstructionMk<String> {
                     @Override
                     public String callInstruction(String programSymbol, List<VariableBinding> inputs, List<VariableBinding> outputs) {
-                        return runProgram(programOf(programSymbol), inputs, outputs);
+                        return runProgram(programSymbol, inputs, outputs);
                     }
                 } yield new Impl();
             }
@@ -181,9 +183,9 @@ public interface JsTranspiler extends Transpiler<List<String>> {
         return "this.%s".formatted(varName);
     }
 
-    default String callParagraph(String paragraphName) {
+    default String callParagraph(String paragraphName, boolean async) {
         var base = "%s()".formatted(fVar(fPar(paragraphName)));
-        if(paragraphs().isParagraphAsynchronous(paragraphName))
+        if(async)
             return "await " + base;
         return base;
     }
@@ -192,20 +194,20 @@ public interface JsTranspiler extends Transpiler<List<String>> {
         return "%s.getValue()".formatted(fVar(symbol));
     }
 
-    default String printWhile(String booleanSymbol, String block) {
-        return "while(%s) %s;".formatted(getValue(booleanSymbol), block);
+    default String printWhile(String booleanSymbol, String instruction) {
+        return "while(%s) %s;".formatted(getValue(booleanSymbol), instruction);
     }
 
-    default String printIf(String booleanSymbol, String paragraphName) {
-        return "if(%s) %s;".formatted(getValue(booleanSymbol), callParagraph(paragraphName));
+    default String printIf(String booleanSymbol, String instruction) {
+        return "if(%s) %s;".formatted(getValue(booleanSymbol), instruction);
     }
 
-    default String printIfElse(String booleanSymbol, String paragraphName, String alternativeParagraphName) {
-        return "if(%s) %s; else %s;".formatted(getValue(booleanSymbol), callParagraph(paragraphName), callParagraph(alternativeParagraphName));
+    default String printIfElse(String booleanSymbol, String instruction, String altInstruction) {
+        return "if(%s) %s; else %s;".formatted(getValue(booleanSymbol), instruction, altInstruction);
     }
 
-    default String printIfNot(String booleanSymbol, String paragraphName) {
-        return "if(! %s) %s;".formatted(getValue(booleanSymbol), callParagraph(paragraphName));
+    default String printIfNot(String booleanSymbol, String instruction) {
+        return "if(! %s) %s;".formatted(getValue(booleanSymbol), instruction);
     }
 
     default String setValueOrBytes(String baseSymbol, String value) {
