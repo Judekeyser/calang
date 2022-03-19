@@ -40,7 +40,7 @@ public interface JsTranspiler extends Transpiler<List<String>> {
                                 .map(b -> "%s:%s".formatted(b.childSymb(), fVar(b.parentSymb())))
                                 .collect(Collectors.joining(",")),
                         outputs.stream()
-                                .map(ob -> setValue(fVar(ob.parentSymb()), "__.%s".formatted(ob.childSymb())))
+                                .map(ob -> setValue(ob.parentSymb(), "__.%s".formatted(ob.childSymb())))
                                 .collect(Collectors.joining("\n"))
                         );
     }
@@ -141,7 +141,7 @@ public interface JsTranspiler extends Transpiler<List<String>> {
                 class Impl extends Template implements StoreInstructionMk<String> {
                     @Override
                     public String storeInstruction(String targetSymbol, String sourceSymbol) {
-                        return setValueOrBytes(fVar(targetSymbol), sourceSymbol);
+                        return setValueOrBytes(targetSymbol, sourceSymbol);
                     }
                 } yield new Impl();
             }
@@ -149,7 +149,7 @@ public interface JsTranspiler extends Transpiler<List<String>> {
                 class Impl extends Template implements ComptInstructionMk<String> {
                     @Override
                     public String computeInstruction(String targetSymbol, String baseSymbol, String operator, List<String> parameterSymbols) {
-                        return setValue(fVar(targetSymbol), sendMessage(baseSymbol, operator, parameterSymbols));
+                        return setValue(targetSymbol, sendMessage(baseSymbol, operator, parameterSymbols));
                     }
                 } yield new Impl();
             }
@@ -212,7 +212,7 @@ public interface JsTranspiler extends Transpiler<List<String>> {
     }
 
     default String setValue(String baseSymbol, String value) {
-        return "%s.setValue(%s);".formatted(baseSymbol, value);
+        return "%s.setValue(%s);".formatted(fVar(baseSymbol), value);
     }
 
     default String sendMessage(String baseSymbol, String operator, Collection<String> argsSymbols) {

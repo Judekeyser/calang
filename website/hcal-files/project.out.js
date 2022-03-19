@@ -15,11 +15,11 @@ return def; })();
 var password_input = (function() {
 var def =
 function({  }) { this.printer = new Print();
-  this.$MODAL_ELEMENT = Calang['ModalElementValue'].newInstance();
   this.$TEXT_RECORD = Calang['BytesValue'].newInstance();
-  this.$MODAL_RESULT = Calang['BooleanValue'].newInstance();
+  this.$TEXT_RECORD = Calang['BytesValue'].newInstance();
   this.$CLICK_PROGRAM = Calang['ProgramValue'].newInstance();
-  this.$TEXT_RECORD = Calang['BytesValue'].newInstance();
+  this.$MODAL_ELEMENT = Calang['ModalElementValue'].newInstance();
+  this.$MODAL_RESULT = Calang['BooleanValue'].newInstance();
 };
 def.prototype = {
   __MODAL_CLOSE:  function() {
@@ -53,8 +53,8 @@ return def; })();
 var prog = (function() {
 var def =
 function({  }) { this.printer = new Print();
-  this.$MESSAGE = Calang['BytesValue'].newInstance();
   this.$LENGTH = Calang['IntegerValue'].newInstance();
+  this.$MESSAGE = Calang['BytesValue'].newInstance();
 };
 def.prototype = {
   __BEGIN: async function() {
@@ -85,9 +85,9 @@ var def =
 function({ $HEIGHT }) { this.printer = new Print();
   this.$HEIGHT = Calang['IntegerValue'].newInstance();
     this.$HEIGHT.setValue($HEIGHT);
+  this.$FLAG = Calang['BooleanValue'].newInstance();
   this.$LOCAL_HEIGHT = Calang['IntegerValue'].newInstance();
   this.$CURSOR = Calang['IntegerValue'].newInstance();
-  this.$FLAG = Calang['BooleanValue'].newInstance();
 };
 def.prototype = {
   __PRINT_LINE:  function() {
