@@ -3,17 +3,14 @@ package calang.transpilation.js;
 import calang.VariableBinding;
 import calang.model.bricks.Paragraphs;
 import calang.model.bricks.Scope;
-import calang.model.bricks.instructions.*;
 import calang.model.types.TypedValue;
 import calang.transpilation.Transpiler;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static calang.rejections.Rejections.UNRECOGNIZED_INSTRUCTION_TOKEN;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Comparator.comparing;
-import static java.util.Objects.requireNonNull;
 
 public interface JsTranspiler extends Transpiler<List<String>> {
 
@@ -84,7 +81,7 @@ public interface JsTranspiler extends Transpiler<List<String>> {
                 for (var p : (Iterable<Map.Entry<String, Paragraphs.Paragraph>>) paragraphLookup.entrySet().stream().sorted(Map.Entry.comparingByKey())::iterator) {
                     linesToWrite.add("  %s: %s function() {".formatted(fPar(p.getKey()), paragraphs().isParagraphAsynchronous(p.getKey()) ? "async" : ""));
                     for (var instr : p.getValue().tokens())
-                        linesToWrite.add(requireNonNull(instructionOf(instr).makeInstruction()));
+                        linesToWrite.add(instructionOf(instr));
                     linesToWrite.add("  },");
                 }
                 {
@@ -105,68 +102,39 @@ public interface JsTranspiler extends Transpiler<List<String>> {
         return unmodifiableList(linesToWrite);
     }
 
-    default InstructionMk<String> instructionOf(String[] tokens) {
-        abstract class Template implements InstructionMk<String> {
-            public String[] tokens() {
-                return tokens;
-            }
-        }
-        return switch (tokens[0]) {
-            case "PERFORM" -> {
-                class Impl extends Template implements PerformInstructionMk<String> {
-                    @Override
-                    public String performInstruction(String paragraphName, String altParagraphName, String booleanValueSymbol, boolean isLoop, boolean isContraCondition) {
-                        String line;
-                        var isAsync = paragraphs().isParagraphAsynchronous(paragraphName);
+    /******************************************************************************* */
 
-                        if(booleanValueSymbol == null)
-                            line = callParagraph(paragraphName, isAsync);
-                        else if (isLoop)
-                            line = printWhile(booleanValueSymbol, callParagraph(paragraphName, isAsync));
-                        else if (isContraCondition)
-                            line = printIfNot(booleanValueSymbol, callParagraph(paragraphName, isAsync));
-                        else if (altParagraphName != null)
-                            line = printIfElse(booleanValueSymbol, callParagraph(paragraphName, isAsync), callParagraph(altParagraphName, paragraphs().isParagraphAsynchronous(altParagraphName)));
-                        else
-                            line = printIf(booleanValueSymbol, callParagraph(paragraphName, isAsync));
-                        return line;
-                    }
-                } yield new Impl();
-            }
-            case "PRINT" -> {
-                class Impl extends Template implements PrintInstructionMk<String> {
-                    @Override
-                    public String printInstruction(List<String> tokens) {
-                        return print(tokens);
-                    }
-                } yield new Impl();
-            }
-            case "STORE" -> {
-                class Impl extends Template implements StoreInstructionMk<String> {
-                    @Override
-                    public String storeInstruction(String targetSymbol, String sourceSymbol) {
-                        return setValueOrBytes(targetSymbol, sourceSymbol);
-                    }
-                } yield new Impl();
-            }
-            case "COMPT" -> {
-                class Impl extends Template implements ComptInstructionMk<String> {
-                    @Override
-                    public String computeInstruction(String targetSymbol, String baseSymbol, String operator, List<String> parameterSymbols) {
-                        return setValue(targetSymbol, sendMessage(baseSymbol, operator, parameterSymbols));
-                    }
-                } yield new Impl();
-            }
-            case "CALL" -> {
-                class Impl extends Template implements CallInstructionMk<String> {
-                    @Override
-                    public String callInstruction(String programSymbol, List<VariableBinding> inputs, List<VariableBinding> outputs) {
-                        return runProgram(programSymbol, inputs, outputs);
-                    }
-                } yield new Impl();
-            }
-            default -> throw UNRECOGNIZED_INSTRUCTION_TOKEN.error(tokens[0]);
-        };
+    default String transpileCallInstruction(String programSymbol, List<VariableBinding> inputs, List<VariableBinding> outputs) {
+        return runProgram(programSymbol, inputs, outputs);
+    }
+
+    default String transpileComptInstruction(String targetSymbol, String baseSymbol, String operator, List<String> parameterSymbols) {
+        return setValue(targetSymbol, sendMessage(baseSymbol, operator, parameterSymbols));
+    }
+
+    default String transpileStoreInstruction(String targetSymbol, String sourceSymbol) {
+        return setValueOrBytes(targetSymbol, sourceSymbol);
+    }
+
+    default String transpilePrintInstruction(List<String> tokens) {
+        return print(tokens);
+    }
+
+    default String transpilePerformInstruction(String paragraphName, String altParagraphName, String booleanValueSymbol, boolean isLoop, boolean isContraCondition) {
+        String line;
+        var isAsync = paragraphs().isParagraphAsynchronous(paragraphName);
+
+        if(booleanValueSymbol == null)
+            line = callParagraph(paragraphName, isAsync);
+        else if (isLoop)
+            line = printWhile(booleanValueSymbol, callParagraph(paragraphName, isAsync));
+        else if (isContraCondition)
+            line = printIfNot(booleanValueSymbol, callParagraph(paragraphName, isAsync));
+        else if (altParagraphName != null)
+            line = printIfElse(booleanValueSymbol, callParagraph(paragraphName, isAsync), callParagraph(altParagraphName, paragraphs().isParagraphAsynchronous(altParagraphName)));
+        else
+            line = printIf(booleanValueSymbol, callParagraph(paragraphName, isAsync));
+        return line;
     }
 
     /******************************************************************************* */
