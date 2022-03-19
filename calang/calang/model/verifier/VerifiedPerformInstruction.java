@@ -1,28 +1,21 @@
 package calang.model.verifier;
 
-import calang.model.bricks.Paragraphs;
 import calang.model.bricks.instructions.PerformInstructionMk;
 import calang.model.bricks.Scope;
 import calang.rejections.Rejections;
 import calang.model.types.BooleanValue;
 
-import java.util.function.Predicate;
-
-import static java.util.function.Predicate.not;
-
 public interface VerifiedPerformInstruction extends PerformInstructionMk<Void> {
 
-    Paragraphs paragraphs();
+    boolean isParagraphUnknown(String pargraphName);
 
     Scope scope();
 
     @Override
     default Void performInstruction(String paragraphName, String alternativeParagraphName, String booleanValueSymbol, boolean isLoop, boolean isContraCondition) {
-        Predicate<String> absentParagraph = not(paragraphs().paragraphsByName()::containsKey);
-
-        if(absentParagraph.test(paragraphName))
+        if(isParagraphUnknown(paragraphName))
             throw Rejections.UNDEFINED_PARAGRAPH.error(paragraphName);
-        if(alternativeParagraphName != null && absentParagraph.test(alternativeParagraphName))
+        if(alternativeParagraphName != null && isParagraphUnknown(alternativeParagraphName))
             throw Rejections.UNDEFINED_PARAGRAPH.error(alternativeParagraphName);
         var flagTypeIfAny = booleanValueSymbol == null ? null:
                 scope().typeOf(booleanValueSymbol);

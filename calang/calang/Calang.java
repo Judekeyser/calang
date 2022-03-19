@@ -2,10 +2,12 @@ package calang;
 
 import calang.model.bricks.Paragraphs;
 import calang.model.bricks.Scope;
+import calang.model.operator.OperatorMap;
 import calang.model.operator.WritableOperatorMap;
 import calang.model.types.TypeMap;
 import calang.model.types.TypedValue;
 import calang.model.types.WritableTypeMap;
+import calang.model.verifier.VerifiedParagraphs;
 import calang.transpilation.Transpiler;
 import calang.transpilation.js.JsTranspiler;
 
@@ -43,15 +45,30 @@ public class Calang {
             };
         }
 
-        private final Paragraphs paragraphs = new Paragraphs() {
+        private final Paragraphs paragraphs = new VerifiedParagraphs() {
+            @Override
+            public Scope scope() {
+                return scope;
+            }
+
+            @Override
+            public OperatorMap operatorMap() {
+                return operatorsMap;
+            }
+
+            @Override
+            public TypeMap typeMap() {
+                return typesMap;
+            }
+
             @Override
             public Map<String, Paragraph> paragraphsByName() {
-                return paragraphsMap == null ? (paragraphsMap = Paragraphs.super.paragraphsByName()) : paragraphsMap;
+                return paragraphsMap == null ? (paragraphsMap = VerifiedParagraphs.super.paragraphsByName()) : paragraphsMap;
             }
 
             @Override
             public Set<String> asynchronousParagraphs() {
-                return asynchronousParagraphs == null ? (asynchronousParagraphs = Paragraphs.super.asynchronousParagraphs()): asynchronousParagraphs;
+                return asynchronousParagraphs == null ? (asynchronousParagraphs = VerifiedParagraphs.super.asynchronousParagraphs()): asynchronousParagraphs;
             }
 
             @Override
@@ -77,7 +94,7 @@ public class Calang {
                 return programLines;
             }
         };
-        private final JsTranspiler transpiler = new JsTranspiler() {
+        private final Transpiler<List<String>> transpiler = new JsTranspiler() {
             @Override
             public String programName() {
                 assert programName != null;
