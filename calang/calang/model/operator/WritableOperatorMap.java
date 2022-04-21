@@ -1,10 +1,11 @@
 package calang.model.operator;
 
+import calang.model.operator.meta.Operators;
 import calang.model.types.*;
+import calang.model.types.dummy.Dummy;
 import calang.rejections.Rejections;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public interface WritableOperatorMap extends OperatorMap, OperatorRegisterer {
 
@@ -23,14 +24,10 @@ public interface WritableOperatorMap extends OperatorMap, OperatorRegisterer {
                 put(ProgramValue.class, new HashMap<>());
             }};
             {
-                for (var e : IntegerValue.DEFAULT_OPERATORS.entrySet())
-                    registerOperator(IntegerValue.class, e.getKey(), e.getValue());
-
-                for (var e : BytesValue.DEFAULT_OPERATORS.entrySet())
-                    registerOperator(BytesValue.class, e.getKey(), e.getValue());
-
-                for (var e : BooleanValue.DEFAULT_OPERATORS.entrySet())
-                    registerOperator(BooleanValue.class, e.getKey(), e.getValue());
+                registerOperatorsOf(IntegerValue.class);
+                registerOperatorsOf(BytesValue.class);
+                registerOperatorsOf(ProgramValue.class);
+                registerOperatorsOf(BooleanValue.class);
             }
 
             @Override
@@ -59,6 +56,26 @@ public interface WritableOperatorMap extends OperatorMap, OperatorRegisterer {
             @SuppressWarnings("unchecked")
             private <T extends TypedValue<T>> Map<String, Operator<T>> safeGet(Class<T> typedValue) {
                 return (Map<String, Operator<T>>) map.get(typedValue);
+            }
+
+            private <T extends TypedValue<T>> void registerOperatorsOf(Class<T> clz) {
+                var operators = clz.getAnnotationsByType(Operators.class)[0].value();
+                for (var operator : operators) {
+                    @SuppressWarnings("unchecked") // We need a <T extends TypedValue<T>> , so we mute type-checking
+                    var returnType = (Class<Dummy>) operator.returnType();
+                    Operator<T> op;
+                    if(operator.variadicArgument() == Dummy.class) {
+                        op = calang.model.operator.Operators.operatorOf(clz, returnType,
+                                new ArrayList<>(Arrays.asList(operator.arguments())));
+                    } else {
+                        assert operator.arguments().length == 0
+                                : "You should not set both a variadic argument and standard arguments";
+                        op = calang.model.operator.Operators.operatorOf(clz, returnType,
+                                operator.variadicArgument()
+                        );
+                    }
+                    registerOperator(clz, operator.name(), op);
+                }
             }
         };
     }

@@ -1,26 +1,37 @@
 package calang.model.types;
 
-import calang.model.operator.Operator;
-import calang.model.operator.Operators;
+import calang.model.operator.meta.Operator;
+import calang.model.operator.meta.Operators;
 
-import java.util.Map;
-
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-
-public class BooleanValue implements TypedValue<BooleanValue> {
-
-    /**
-     * Default operators on the BooleanValue types
-     */
-
-    public static final Map<String, Operator<BooleanValue>> DEFAULT_OPERATORS = Map.of(
-        "NEGATE", Operators.operatorOf(BooleanValue.class, BooleanValue.class, emptyList()),
-        "AND", Operators.operatorOf(BooleanValue.class, BooleanValue.class, BooleanValue.class),
-        "OR", Operators.operatorOf(BooleanValue.class, BooleanValue.class, BooleanValue.class),
-        "XAND", Operators.operatorOf(BooleanValue.class, BooleanValue.class, BooleanValue.class),
-        "XOR", Operators.operatorOf(BooleanValue.class, BooleanValue.class, BooleanValue.class),
-        "IMPLIES", Operators.operatorOf(BooleanValue.class, BooleanValue.class, singletonList(IntegerValue.class))
-    );
-
-}
+@Operators({
+        @Operator(
+                name = "NEGATE",
+                returnType = BooleanValue.class
+        ),
+        @Operator(
+                name = "AND",
+                returnType = BooleanValue.class,
+                variadicArgument = BooleanValue.class
+        ),
+        @Operator(
+                name = "OR",
+                returnType = BooleanValue.class,
+                variadicArgument = BooleanValue.class
+        ),
+        @Operator(
+                name = "XAND",
+                returnType = BooleanValue.class,
+                variadicArgument = BooleanValue.class
+        ),
+        @Operator(
+                name = "XOR",
+                returnType = BooleanValue.class,
+                variadicArgument = BooleanValue.class
+        ),
+        @Operator(
+                name = "IMPLIES",
+                returnType = BooleanValue.class,
+                arguments = { BooleanValue.class }
+        )
+})
+public class BooleanValue implements TypedValue<BooleanValue> {}
