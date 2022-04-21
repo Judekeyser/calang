@@ -16,7 +16,7 @@ import java.util.*;
 import static java.util.function.Predicate.not;
 
 public class Calang {
-    interface EphemereTranspiler extends Transpiler<List<String>>, AutoCloseable {
+    interface EphemereTranspiler extends JsTranspiler, AutoCloseable {
         @Override
         void close();
     }
@@ -41,6 +41,21 @@ public class Calang {
                 @Override
                 public void close() {
                     reset();
+                }
+
+                @Override
+                public String programName() {
+                    return CalangRun.this.programName;
+                }
+
+                @Override
+                public Paragraphs paragraphs() {
+                    return CalangRun.this.paragraphs;
+                }
+
+                @Override
+                public Scope scope() {
+                    return CalangRun.this.scope;
                 }
             };
         }

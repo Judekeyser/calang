@@ -6,9 +6,6 @@ import calang.rejections.Rejections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-
 public interface WritableOperatorMap extends OperatorMap, OperatorRegisterer {
 
     @Override
@@ -26,16 +23,14 @@ public interface WritableOperatorMap extends OperatorMap, OperatorRegisterer {
                 put(ProgramValue.class, new HashMap<>());
             }};
             {
-                registerOperator(IntegerValue.class, "NEQ", BooleanValue.class, singletonList(IntegerValue.class));
-                registerOperator(IntegerValue.class, "PREC", IntegerValue.class, emptyList());
-                registerOperator(IntegerValue.class, "SUCC", IntegerValue.class, emptyList());
-                registerOperator(BytesValue.class, "|.|", IntegerValue.class, emptyList());
-                registerOperator(BooleanValue.class, "NEGATE", BooleanValue.class, emptyList());
-                registerOperator(BooleanValue.class, "AND", BooleanValue.class, BooleanValue.class);
-                registerOperator(BooleanValue.class, "OR", BooleanValue.class, BooleanValue.class);
-                registerOperator(BooleanValue.class, "XAND", BooleanValue.class, BooleanValue.class);
-                registerOperator(BooleanValue.class, "XOR", BooleanValue.class, BooleanValue.class);
-                registerOperator(BooleanValue.class, "IMPLIES", BooleanValue.class, singletonList(IntegerValue.class));
+                for (var e : IntegerValue.DEFAULT_OPERATORS.entrySet())
+                    registerOperator(IntegerValue.class, e.getKey(), e.getValue());
+
+                for (var e : BytesValue.DEFAULT_OPERATORS.entrySet())
+                    registerOperator(BytesValue.class, e.getKey(), e.getValue());
+
+                for (var e : BooleanValue.DEFAULT_OPERATORS.entrySet())
+                    registerOperator(BooleanValue.class, e.getKey(), e.getValue());
             }
 
             @Override

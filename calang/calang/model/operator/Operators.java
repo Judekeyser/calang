@@ -4,7 +4,7 @@ import calang.model.types.TypedValue;
 
 import java.util.List;
 
-class Operators {
+public class Operators {
 
     private static abstract class WithReturnType<T extends TypedValue<T>> implements Operator<T> {
         private final Class<?> returnType;
@@ -18,7 +18,7 @@ class Operators {
         }
     }
 
-    static <T extends TypedValue<T>, R extends TypedValue<R>> Operator<T> operatorOf(
+    public static <T extends TypedValue<T>, R extends TypedValue<R>> Operator<T> operatorOf(
             Class<T> baseType, Class<R> returnType,
             List<Class<? extends TypedValue<?>>> typeChecker
     ) {
@@ -36,7 +36,7 @@ class Operators {
         } return new Impl();
     }
 
-    static <T extends TypedValue<T>, R extends TypedValue<R>> Operator<T> operatorOf(
+    public static <T extends TypedValue<T>, R extends TypedValue<R>> Operator<T> operatorOf(
             Class<T> baseType, Class<R> returnType, Class<? extends TypedValue<?>> typeChecker
     ) {
         class Impl extends WithReturnType<T> {
