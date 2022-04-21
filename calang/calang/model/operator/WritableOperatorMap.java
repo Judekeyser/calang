@@ -17,17 +17,14 @@ public interface WritableOperatorMap extends OperatorMap, OperatorRegisterer {
 
     static WritableOperatorMap getMutableDefaultOperatorMap() {
         return new WritableOperatorMap() {
-            private final Map<Class<? extends TypedValue<?>>, Map<String, ? extends Operator<?>>> map = new HashMap<>() {{
-                put(IntegerValue.class, new HashMap<>());
-                put(BytesValue.class, new HashMap<>());
-                put(BooleanValue.class, new HashMap<>());
-                put(ProgramValue.class, new HashMap<>());
-            }};
+            private final Map<Class<? extends TypedValue<?>>, Map<String, ? extends Operator<?>>> map = new HashMap<>();
             {
-                registerOperatorsOf(IntegerValue.class);
-                registerOperatorsOf(BytesValue.class);
-                registerOperatorsOf(ProgramValue.class);
-                registerOperatorsOf(BooleanValue.class);
+                for (var knownValue : WritableTypeMap.getMutableDefaultTypeMap().knownValues()) {
+                    @SuppressWarnings("unchecked") // We need a T extends TypedValue<T> so we please the compiler
+                    var value = (Class<Dummy>) knownValue;
+
+                    registerOperatorsOf(value);
+                }
             }
 
             @Override

@@ -1,5 +1,7 @@
 package calang.model.types;
 
+import calang.model.types.meta.TypeName;
+
 import java.util.HashMap;
 
 import static calang.rejections.Rejections.UNSUPPORTED_TYPE;
@@ -12,14 +14,17 @@ public interface WritableTypeMap extends TypeMap, TypeRegisterer {
     @Override
     <T extends TypedValue<T>> void registerType(String typeSymbol, Class<T> type);
 
+    Iterable<Class<? extends TypedValue<?>>> knownValues();
+
     static WritableTypeMap getMutableDefaultTypeMap() {
         return new WritableTypeMap() {
-            private final HashMap<String, Class<?>> map = new HashMap<>() {{
-                put("INTEGER", IntegerValue.class);
-                put("BYTES", BytesValue.class);
-                put("BOOLEAN", BooleanValue.class);
-                put("PROGRAM", ProgramValue.class);
-            }};
+            private final HashMap<String, Class<? extends TypedValue<?>>> map = new HashMap<>();
+            {
+                registerTypeOf(IntegerValue.class);
+                registerTypeOf(BytesValue.class);
+                registerTypeOf(BooleanValue.class);
+                registerTypeOf(ProgramValue.class);
+            }
 
             @Override
             @SuppressWarnings("unchecked")
@@ -32,6 +37,16 @@ public interface WritableTypeMap extends TypeMap, TypeRegisterer {
             @Override
             public <T extends TypedValue<T>> void registerType(String typeSymbol, Class<T> type) {
                 map.put(typeSymbol, type);
+            }
+
+            @Override
+            public Iterable<Class<? extends TypedValue<?>>> knownValues() {
+                return map.values();
+            }
+
+            private <T extends TypedValue<T>> void registerTypeOf(Class<T> clz) {
+                var typeName = clz.getAnnotationsByType(TypeName.class)[0].value();
+                registerType(typeName, clz);
             }
         };
     }
